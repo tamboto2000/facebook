@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -175,6 +176,10 @@ RETRY:
 
 	if fb.Tokens.Get("fb_dtsg") == "" || fb.Tokens.Get("__user") == "" {
 		if rootURL == "https://web.facebook.com" {
+			// DELETE
+			f, _ := os.Create("index.html")
+			f.Write(body)
+			return nil
 			return errors.New("invalid session cookie")
 		}
 

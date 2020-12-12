@@ -95,7 +95,7 @@ func (r *reader) next() bool {
 }
 
 func isNumber(char byte) bool {
-	//"0, 1, 2, 3, 4, 5, 6, 7, 8, 9"
+	// 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
 	if char != 48 && char != 49 && char != 50 &&
 		char != 51 && char != 52 && char != 53 &&
 		char != 54 && char != 55 && char != 56 && char != 57 {
@@ -106,7 +106,7 @@ func isNumber(char byte) bool {
 }
 
 func isAllowedChar(char byte) bool {
-	//"{, }, [,  , \", \t, \v, \n, \"
+	// {, }, [,  , \", \t, \v, \n, \
 	if char != 123 && char != 125 && char != 91 &&
 		char != 32 && char != 34 && char != 9 &&
 		char != 11 && char != 10 && char != 92 {
