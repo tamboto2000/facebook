@@ -3,6 +3,7 @@ module github.com/tamboto2000/facebook
 go 1.14
 
 require (
-	github.com/tamboto2000/htmltojson v0.0.0-20200716062939-34054eca10d1
-	github.com/tamboto2000/random v0.0.0-20200716082935-04261294f822
+	github.com/tamboto2000/htmltojson v1.0.0
+	github.com/tamboto2000/random v1.0.0
+	golang.org/x/net v0.0.0-20201209123823-ac852fbbde11 // indirect
 )

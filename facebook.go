@@ -13,9 +13,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/tamboto2000/random"
 	"github.com/tamboto2000/facebook/raw"
 	"github.com/tamboto2000/htmltojson"
+	"github.com/tamboto2000/random"
 )
 
 type injectable interface {
@@ -268,7 +268,7 @@ func (fb *Facebook) doGraphQLRequest(vr map[string]interface{}, docID, apiName s
 	q.Add("__comet_req", "1")
 	vrs, _ := json.Marshal(vr)
 	q.Add("variables", string(vrs))
-	q.Add("__req", random.RandString(2))
+	q.Add("__req", random.RandStr(2))
 	if docID != "" {
 		q.Add("doc_id", docID)
 	}
