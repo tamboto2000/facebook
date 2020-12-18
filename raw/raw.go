@@ -2,25 +2,25 @@
 package raw
 
 type Edge struct {
-	Node *Node `json:"node"`
+	Node *Node `json:"node,omitempty"`
 }
 
 type Collection struct {
-	Nodes []Node `json:"nodes"`
+	Nodes []Node `json:"nodes,omitempty"`
 }
 
 type WemPrivateSharingBundle struct {
-	PrivateSharingControlModelForUser *PrivateSharingControl `json:"private_sharing_control_model_for_user"`
+	PrivateSharingControlModelForUser *PrivateSharingControl `json:"private_sharing_control_model_for_user,omitempty"`
 }
 
 type PrivateSharingControl struct {
-	PrivateSharingEnabled bool `json:"private_sharing_enabled"`
+	PrivateSharingEnabled bool `json:"private_sharing_enabled,omitempty"`
 }
 
 type StoryBucket struct {
-	Nodes []Node `json:"nodes"`
+	Nodes []Node `json:"nodes,omitempty"`
 }
 
 type Extensions struct {
-	IsFinal bool `json:"is_final"`
+	IsFinal bool `json:"is_final,omitempty"`
 }

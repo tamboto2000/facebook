@@ -1,13 +1,14 @@
 package raw
 
 type Node struct {
-	DisplayableCount *int        `json:"displayable_count"`
-	Name             string      `json:"name"`
-	SectionType      string      `json:"section_type"`
-	TabKey           string      `json:"tab_key"`
-	Tracking         string      `json:"tracking"`
-	URL              string      `json:"url"`
-	AllCollections   *Node       `json:"all_collections"`
-	ID               string      `json:"id"`
-	FirstStoryToShow interface{} `json:"first_story_to_show"`
+	Nodes            []Node      `json:"nodes,omitempty"`
+	DisplayableCount *int        `json:"displayable_count,omitempty"`
+	Name             string      `json:"name,omitempty"`
+	SectionType      string      `json:"section_type,omitempty"`
+	TabKey           string      `json:"tab_key,omitempty"`
+	Tracking         string      `json:"tracking,omitempty"`
+	URL              string      `json:"url,omitempty"`
+	AllCollections   *Node       `json:"all_collections,omitempty"`
+	ID               string      `json:"id,omitempty"`
+	FirstStoryToShow interface{} `json:"first_story_to_show,omitempty"`
 }

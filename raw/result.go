@@ -1,8 +1,8 @@
 package raw
 
 type Result struct {
-	Data       *Data       `json:"data"`
-	Extensions *Extensions `json:"extensions"`
-	Label      string      `json:"label"`
-	Path       []string    `json:"path"`	
+	Data       *Data       `json:"data,omitempty"`
+	Extensions *Extensions `json:"extensions,omitempty"`
+	Label      string      `json:"label,omitempty"`
+	Path       []string    `json:"path,omitempty"`
 }

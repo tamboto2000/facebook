@@ -10,27 +10,27 @@ import (
 
 // SiteData is maybe some sort of current session data, required when requesting Facebook GraphQL API
 type SiteData struct {
-	ServerRevision     int     `json:"server_revision"`
-	ClientRevision     int     `json:"client_revision"`
-	Tier               string  `json:"tier"`
-	PushPhase          string  `json:"push_phase"`
-	PkgCohort          string  `json:"pkg_cohort"`
-	PR                 float64 `json:"pr"`
-	HasteSite          string  `json:"haste_site"`
-	BeOneAhead         bool    `json:"be_one_ahead"`
-	IROn               bool    `json:"ir_on"`
-	IsRTL              bool    `json:"is_rtl"`
-	IsComet            bool    `json:"is_comet"`
-	IsExperimentalTier bool    `json:"is_experimental_tier"`
-	IsJITWarmedUp      bool    `json:"is_jit_warmed_up"`
-	Hsi                string  `json:"hsi"`
-	SemrHostBucket     string  `json:"semr_host_bucket"`
-	Spin               int     `json:"spin"`
-	SpinR              int     `json:"__spin_r"`
-	SpinB              string  `json:"__spin_b"`
-	SpinT              int     `json:"__spin_t"`
-	CometEnv           string  `json:"comet_env"`
-	Vip                string  `json:"vip"`
+	ServerRevision     int     `json:"server_revision,omitempty"`
+	ClientRevision     int     `json:"client_revision,omitempty"`
+	Tier               string  `json:"tier,omitempty"`
+	PushPhase          string  `json:"push_phase,omitempty"`
+	PkgCohort          string  `json:"pkg_cohort,omitempty"`
+	PR                 float64 `json:"pr,omitempty"`
+	HasteSite          string  `json:"haste_site,omitempty"`
+	BeOneAhead         bool    `json:"be_one_ahead,omitempty"`
+	IROn               bool    `json:"ir_on,omitempty"`
+	IsRTL              bool    `json:"is_rtl,omitempty"`
+	IsComet            bool    `json:"is_comet,omitempty"`
+	IsExperimentalTier bool    `json:"is_experimental_tier,omitempty"`
+	IsJITWarmedUp      bool    `json:"is_jit_warmed_up,omitempty"`
+	Hsi                string  `json:"hsi,omitempty"`
+	SemrHostBucket     string  `json:"semr_host_bucket,omitempty"`
+	Spin               int     `json:"spin,omitempty"`
+	SpinR              int     `json:"__spin_r,omitempty"`
+	SpinB              string  `json:"__spin_b,omitempty"`
+	SpinT              int     `json:"__spin_t,omitempty"`
+	CometEnv           string  `json:"comet_env,omitempty"`
+	Vip                string  `json:"vip,omitempty"`
 }
 
 // prepare SiteData for GraphQL request

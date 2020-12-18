@@ -2,9 +2,9 @@ package facebook
 
 // Photo contains image type media
 type Photo struct {
-	ID     string `json:"id"`
-	URI    string `json:"uri"`
-	Width  int    `json:"width"`
-	Height int    `json:"height"`
-	URL    string `json:"url"`
+	ID     string `json:"id,omitempty"`
+	URI    string `json:"uri,omitempty"`
+	Width  int    `json:"width,omitempty"`
+	Height int    `json:"height,omitempty"`
+	URL    string `json:"url,omitempty"`
 }

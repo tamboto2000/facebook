@@ -7,16 +7,18 @@ import (
 
 // Profile represent Facebook profile
 type Profile struct {
-	ID                    string `json:"id"`
-	Username              string `json:"username"`
-	Name                  string `json:"name"`
-	AlternateName         string `json:"alternateName"`
-	IsVerified            bool   `json:"isVerified"`
-	IsVisiblyMemorialized bool   `json:"is_visibly_memorialized"`
-	CoverPhoto            *Photo `json:"coverPhoto"`
-	ProfilePhoto          *Photo `json:"profilePhoto"`
-	Gender                string `json:"gender"`
-	BioText               string `json:"bioText"`
+	ID                    string `json:"id,omitempty"`
+	Username              string `json:"username,omitempty"`
+	Name                  string `json:"name,omitempty"`
+	AlternateName         string `json:"alternateName,omitempty"`
+	IsVerified            bool   `json:"isVerified,omitempty"`
+	IsVisiblyMemorialized bool   `json:"is_visibly_memorialized,omitempty"`
+	CoverPhoto            *Photo `json:"coverPhoto,omitempty"`
+	ProfilePhoto          *Photo `json:"profilePhoto,omitempty"`
+	Gender                string `json:"gender,omitempty"`
+	BioText               string `json:"bioText,omitempty"`
+
+	ProfileSections *raw.TimelineNavAppSections `json:"profileSections,omitempty"`
 
 	fb *Facebook
 }
@@ -122,6 +124,14 @@ func composeProfile(item *raw.Item, prof *Profile) {
 										Height: photo.Image.Height,
 										URL:    photo.URL,
 									}
+								}
+							}
+						}
+
+						if user.ProfileTabs != nil {
+							if user.ProfileTabs.ProfileUser != nil {
+								if user.ProfileTabs.ProfileUser.TimelineNavAppSections != nil {
+									prof.ProfileSections = user.ProfileTabs.ProfileUser.TimelineNavAppSections
 								}
 							}
 						}

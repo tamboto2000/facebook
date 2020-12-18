@@ -3,65 +3,65 @@ package raw
 import "encoding/json"
 
 type Item struct {
-	Bbox                 *Bbox             `json:"__bbox"`
-	Require              []json.RawMessage `json:"require"`
-	ActorID              string            `json:"actorID"`
-	RootView             *View             `json:"rootView"`
-	TracePolicy          string            `json:"tracePolicy"`
-	Meta                 *Meta             `json:"meta"`
-	TimeSpentConfig      *TimeSpentConfig  `json:"timeSpentConfig"`
-	EntityKeyConfig      *EntityKeyConfig  `json:"entityKeyConfig"`
-	HostableView         *View             `json:"hostableView"`
-	ProductAttributionID string            `json:"productAttributionId"`
-	URL                  string            `json:"url"`
-	Params               *Params           `json:"params"`
-	RoutePath            string            `json:"routePath"`
+	Bbox                 *Bbox             `json:"__bbox,omitempty"`
+	Require              []json.RawMessage `json:"require,omitempty"`
+	ActorID              string            `json:"actorID,omitempty"`
+	RootView             *View             `json:"rootView,omitempty"`
+	TracePolicy          string            `json:"tracePolicy,omitempty"`
+	Meta                 *Meta             `json:"meta,omitempty"`
+	TimeSpentConfig      *TimeSpentConfig  `json:"timeSpentConfig,omitempty"`
+	EntityKeyConfig      *EntityKeyConfig  `json:"entityKeyConfig,omitempty"`
+	HostableView         *View             `json:"hostableView,omitempty"`
+	ProductAttributionID string            `json:"productAttributionId,omitempty"`
+	URL                  string            `json:"url,omitempty"`
+	Params               *Params           `json:"params,omitempty"`
+	RoutePath            string            `json:"routePath,omitempty"`
 }
 
 type EntityKeyConfig struct {
-	EntityType *EntityID `json:"entity_type"`
-	EntityID   *EntityID `json:"entity_id"`
-	Section    *EntityID `json:"section"`
+	EntityType *EntityID `json:"entity_type,omitempty"`
+	EntityID   *EntityID `json:"entity_id,omitempty"`
+	Section    *EntityID `json:"section,omitempty"`
 }
 
 type EntityID struct {
-	Source string `json:"source"`
-	Value  string `json:"value"`
+	Source string `json:"source,omitempty"`
+	Value  string `json:"value,omitempty"`
 }
 
 type View struct {
-	AllResources []EntryPoint `json:"allResources"`
-	Resource     *EntryPoint  `json:"resource"`
-	Props        *Props       `json:"props"`
-	EntryPoint   *EntryPoint  `json:"entryPoint"`
+	AllResources []EntryPoint `json:"allResources,omitempty"`
+	Resource     *EntryPoint  `json:"resource,omitempty"`
+	Props        *Props       `json:"props,omitempty"`
+	EntryPoint   *EntryPoint  `json:"entryPoint,omitempty"`
 }
 
 type EntryPoint struct {
-	DR string `json:"__dr"`
+	DR string `json:"__dr,omitempty"`
 }
 
 type Props struct {
-	ViewerID   string `json:"viewerID"`
-	UserVanity string `json:"userVanity"`
-	UserID     string `json:"userID"`
+	ViewerID   string `json:"viewerID,omitempty"`
+	UserVanity string `json:"userVanity,omitempty"`
+	UserID     string `json:"userID,omitempty"`
 }
 
 type Meta struct {
-	Title     string      `json:"title"`
-	Accessory interface{} `json:"accessory"`
+	Title     string      `json:"title,omitempty"`
+	Accessory interface{} `json:"accessory,omitempty"`
 }
 
 type Params struct {
-	Vanity          string      `json:"vanity"`
-	Sk              interface{} `json:"sk"`
-	Viewas          interface{} `json:"viewas"`
-	BoostedAutoOpen interface{} `json:"boosted_auto_open"`
-	BoostPostID     interface{} `json:"boost_post_id"`
-	BoostID         interface{} `json:"boost_id"`
-	BoostRef        interface{} `json:"boost_ref"`
-	So              interface{} `json:"so"`
+	Vanity          string      `json:"vanity,omitempty"`
+	Sk              interface{} `json:"sk,omitempty"`
+	Viewas          interface{} `json:"viewas,omitempty"`
+	BoostedAutoOpen interface{} `json:"boosted_auto_open,omitempty"`
+	BoostPostID     interface{} `json:"boost_post_id,omitempty"`
+	BoostID         interface{} `json:"boost_id,omitempty"`
+	BoostRef        interface{} `json:"boost_ref,omitempty"`
+	So              interface{} `json:"so,omitempty"`
 }
 
 type TimeSpentConfig struct {
-	HasProfileSessionID bool `json:"has_profile_session_id"`
+	HasProfileSessionID bool `json:"has_profile_session_id,omitempty"`
 }

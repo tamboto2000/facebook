@@ -1,9 +1,9 @@
 package raw
 
 type Bbox struct {
-	Complete       bool        `json:"complete"`
-	Result         *Result     `json:"result"`
-	SequenceNumber int         `json:"sequence_number"`
-	Variables      *Variables  `json:"variables"`
-	ExtraContext   interface{} `json:"extra_context"`	
+	Complete       bool        `json:"complete,omitempty"`
+	Result         *Result     `json:"result,omitempty"`
+	SequenceNumber int         `json:"sequence_number,omitempty"`
+	Variables      *Variables  `json:"variables,omitempty"`
+	ExtraContext   interface{} `json:"extra_context,omitempty"`
 }
