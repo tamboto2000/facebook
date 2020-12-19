@@ -3,6 +3,7 @@ package facebook
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/tamboto2000/random"
@@ -34,39 +35,34 @@ type SiteData struct {
 }
 
 // prepare SiteData for GraphQL request
-func (fb *Facebook) prepSiteData(std *SiteData) map[string]string {
-	final := make(map[string]string)
+func (fb *Facebook) prepSiteData(std *SiteData) url.Values {
+	final := make(url.Values)
 	cUser, _ := fb.cookies.Load("c_user")
 	userID := cUser.(*http.Cookie).Value
-	final["av"] = userID
-	final["__user"] = userID
-	final["__a"] = "1"
-	final["__req"] = random.RandStrWithOpt(2, random.Option{IncludeNumber: true})
+	final.Set("av", userID)
+	final.Set("__user", userID)
+	final.Set("__a", "1")
+	final.Set("__req", random.RandStrWithOpt(2, random.Option{IncludeNumber: true}))
 
 	if std.BeOneAhead {
-		final["__beoa"] = "1"
+		final.Set("__beoa", "1")
 	} else {
-		final["__beoa"] = "0"
+		final.Set("__beoa", "0")
 	}
 
-	final["__pc"] = std.PkgCohort
-	final["dpr"] = fmt.Sprintf("%g", std.PR)
-	final["__ccg"] = "GOOD"
-	final["__rev"] = strconv.Itoa(std.ServerRevision)
-	// final["__s"]
-	final["__comet_req"] = "1"
-	final["__comet_env"] = "fb"
-	// final["fb_dtsg"]
-	// final["jazoest"]
-	final["__spin_r"] = strconv.Itoa(std.SpinR)
-	final["__spin_b"] = std.SpinB
-	final["__spin_t"] = strconv.Itoa(std.SpinT)
-	final["fb_api_caller_class"] = "RelayModern"
-	final["server_timestamps"] = "true"
-
-	// fb_api_req_friendly_name
-	// variables
-	// doc_id
+	final.Set("__pc", std.PkgCohort)
+	final.Set("dpr", fmt.Sprintf("%g", std.PR))
+	final.Set("__ccg", "EXCELLENT")
+	final.Set("__rev", strconv.Itoa(std.ServerRevision))
+	final.Set("__comet_req", "1")
+	final.Set("__comet_env", "fb")
+	final.Set("fb_dtsg", fb.FbDtsg)
+	final.Set("jazoest", fb.Jazoest)
+	final.Set("__spin_r", strconv.Itoa(std.SpinR))
+	final.Set("__spin_b", std.SpinB)
+	final.Set("__spin_t", strconv.Itoa(std.SpinT))
+	final.Set("fb_api_caller_class", "RelayModern")
+	final.Set("server_timestamps", "true")
 
 	return final
 }

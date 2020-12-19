@@ -18,7 +18,9 @@ type Profile struct {
 	Gender                string `json:"gender,omitempty"`
 	BioText               string `json:"bioText,omitempty"`
 
+	// This fields is for internal purpose, might be omited latter
 	ProfileSections *raw.TimelineNavAppSections `json:"profileSections,omitempty"`
+	Variables       *raw.Variables              `json:"variables,omitempty"`
 
 	fb *Facebook
 }
@@ -78,6 +80,8 @@ func (fb *Facebook) Profile(user string) (*Profile, error) {
 		return false
 	}, new(raw.Item), true, false)
 
+	profile.fb = fb
+
 	return profile, nil
 }
 
@@ -128,10 +132,12 @@ func composeProfile(item *raw.Item, prof *Profile) {
 							}
 						}
 
+						// Extract profile sections and variables
 						if user.ProfileTabs != nil {
 							if user.ProfileTabs.ProfileUser != nil {
 								if user.ProfileTabs.ProfileUser.TimelineNavAppSections != nil {
 									prof.ProfileSections = user.ProfileTabs.ProfileUser.TimelineNavAppSections
+									prof.Variables = item.Bbox.Variables
 								}
 							}
 						}

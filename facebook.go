@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/tamboto2000/facebook/raw"
@@ -17,6 +18,16 @@ const (
 	userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0"
 )
 
+// Profile section types
+const (
+	About = "ABOUT"
+)
+
+// Collection types
+const (
+	WorkAndEducation = "about_work_and_education"
+)
+
 var rootURL = "https://www.facebook.com"
 
 // Config saves Facebook client settings
@@ -25,6 +36,16 @@ type Config struct {
 	Jazoest  string
 	SiteData *SiteData
 	Cookies  []*http.Cookie
+}
+
+// GraphQLVars contains GraphQL variables for request Facebook GraphQL API
+type GraphQLVars struct {
+	AppSectionFeedKey string `json:"appSectionFeedKey"`
+	CollectionToken   string `json:"collectionToken"`
+	RawSectionToken   string `json:"rawSectionToken"`
+	Scale             string `json:"scale"`
+	SectionToken      string `json:"sectionToken"`
+	UserID            string `json:"userID"`
 }
 
 // Facebook is Facebook client
@@ -270,6 +291,45 @@ func (fb *Facebook) getRequest(path string, query url.Values) ([]byte, error) {
 	}
 
 	fb.mergeCookie(resp.Cookies())
+
+	return buff.Bytes(), nil
+}
+
+func (fb *Facebook) graphQlRequest(body url.Values) ([]byte, error) {
+	header := http.Header{}
+	header.Set("Accept", "*/*")
+	header.Set("Accept-Encoding", "gzip")
+	header.Set("Accept-Language", "en-US,en;q=0.5")
+	header.Set("Content-Type", "application/x-www-form-urlencoded")
+	header.Set("Connection", "keep-alive")
+	header.Set("Upgrade-Insecure-Requests", "1")
+
+	siteData := fb.prepSiteData(fb.SiteData)
+	for k, v := range body {
+		siteData[k] = v
+	}
+
+	req, err := http.NewRequest("POST", rootURL+"/api/graphql/", strings.NewReader(siteData.Encode()))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header = header
+	fb.cookies.Range(func(key, val interface{}) bool {
+		req.AddCookie(val.(*http.Cookie))
+		return true
+	})
+
+	resp, err := fb.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+	buff, err := decompressResponseBody(resp)
+	if err != nil {
+		return nil, err
+	}
 
 	return buff.Bytes(), nil
 }
