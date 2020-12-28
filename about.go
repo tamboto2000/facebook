@@ -14,7 +14,8 @@ const (
 
 // About contains profile about section data
 type About struct {
-	WorkHistory []Work `json:"workHistory,omitempty"`
+	WorkHistory      []Work      `json:"workHistory,omitempty"`
+	EducationHistory []Education `json:"educationHistories,omitempty"`
 }
 
 // SyncAbout fetch required tokens for requesting profile about data collections

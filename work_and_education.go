@@ -22,6 +22,18 @@ type Work struct {
 	Location      string `json:"location,omitempty"`
 }
 
+// Education contain education information
+type Education struct {
+	Title          string   `json:"title,omitempty"`
+	SchoolURL      string   `json:"schoolUrl,omitempty"`
+	Degree         string   `json:"degree,omitempty"`
+	Concentrations []string `json:"concentrations,omitempty"`
+	Description    string   `json:"description,omitempty"`
+	SchoolIcon     *Photo   `json:"schoolIcon,omitempty"`
+	// college or high_school
+	Type string `json:"type,omitempty"`
+}
+
 // SyncWorkAndEducation retrieve Profile's work/occupation history and education history
 func (prof *Profile) SyncWorkAndEducation() error {
 	var section *jsonextract.JSON
@@ -82,7 +94,7 @@ func (prof *Profile) SyncWorkAndEducation() error {
 	}
 
 	// DELETE
-	// jsonextract.SaveToPath(jsons, "work_education_bundle.json")
+	jsonextract.SaveToPath(jsons, "work_education_bundle.json")
 
 	for _, json := range jsons {
 		val, ok := json.KeyVal["label"]
@@ -91,8 +103,9 @@ func (prof *Profile) SyncWorkAndEducation() error {
 		}
 
 		if val.Val.(string) == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
-			works := extractWorks(json)
+			works, educations := extractWorks(json)
 			prof.About.WorkHistory = works
+			prof.About.EducationHistory = educations
 			break
 		}
 	}
@@ -100,21 +113,22 @@ func (prof *Profile) SyncWorkAndEducation() error {
 	return nil
 }
 
-func extractWorks(json *jsonextract.JSON) []Work {
+func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 	works := make([]Work, 0)
+	educations := make([]Education, 0)
 	val, ok := json.KeyVal["data"]
 	if !ok {
-		return nil
+		return nil, nil
 	}
 
 	val, ok = val.KeyVal["activeCollections"]
 	if !ok {
-		return nil
+		return nil, nil
 	}
 
 	val, ok = val.KeyVal["nodes"]
 	if !ok {
-		return nil
+		return nil, nil
 	}
 
 	for _, node := range val.Vals {
@@ -138,12 +152,12 @@ func extractWorks(json *jsonextract.JSON) []Work {
 				// start parsing work history
 				val, ok := section.KeyVal["profile_fields"]
 				if !ok {
-					return nil
+					return nil, nil
 				}
 
 				val, ok = val.KeyVal["nodes"]
 				if !ok {
-					return nil
+					return nil, nil
 				}
 
 				for i, node := range val.Vals {
@@ -236,8 +250,52 @@ func extractWorks(json *jsonextract.JSON) []Work {
 					works = append(works, work)
 				}
 			}
+
+			if val.Val.(string) == "college" {
+				if val, ok := section.KeyVal["profile_fields"]; ok {
+					if val, ok := val.KeyVal["nodes"]; ok {
+						for i, node := range val.Vals {
+							if i == 0 {
+								continue
+							}
+
+							education := Education{
+								Title: node.KeyVal["title"].KeyVal["text"].Val.(string),
+								Type:  "college",
+							}
+
+							// find school url
+							if val, ok := node.KeyVal["title"].KeyVal["ranges"]; ok {
+								for _, rng := range val.Vals {
+									if val, ok := rng.KeyVal["entity"]; ok {
+										if val, ok := val.KeyVal["url"]; ok {
+											education.SchoolURL = val.Val.(string)
+										}
+									}
+								}
+							}
+
+							// find school icon
+							if val, ok := node.KeyVal["renderer"]; ok {
+								if val, ok := val.KeyVal["field"]; ok {
+									if val, ok := val.KeyVal["icon"]; ok {
+										education.SchoolIcon = &Photo{
+											Height: val.KeyVal["height"].Val.(int),
+											Scale:  float64(val.KeyVal["scale"].Val.(int)),
+											URI:    val.KeyVal["uri"].Val.(string),
+											Width:  val.KeyVal["width"].Val.(int),
+										}
+									}
+								}
+							}
+
+							educations = append(educations, education)
+						}
+					}
+				}
+			}
 		}
 	}
 
-	return works
+	return works, educations
 }
