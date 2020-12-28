@@ -1,8 +1,6 @@
 package facebook
 
 import (
-	"bytes"
-	"compress/gzip"
 	"encoding/json"
 	"net/http"
 	"net/url"
