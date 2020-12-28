@@ -1,114 +1,230 @@
 package facebook
 
 import (
-	"github.com/tamboto2000/facebook/raw"
+	"errors"
+	"net/url"
+	"strings"
+
+	"github.com/araddon/dateparse"
+	"github.com/tamboto2000/jsonextract/v2"
 )
 
-// Work contains Profile's work/occupation history
+// Work contains Profile's work/occupation information
 type Work struct {
-	Title       string `json:"title,omitempty"`
-	Description string `json:"description,omitempty"`
-	Icon        *Photo `json:"icon,omitempty"`
+	Title         string `json:"title,omitempty"`
+	CompanyURL    string `json:"companyUrl,omitempty"`
+	Description   string `json:"description,omitempty"`
+	DateStart     string `json:"dateStart,omitempty"`
+	DateStartUnix int64  `json:"dateStartUnix,omitempty"`
+	DateEnd       string `json:"dateEnd,omitempty"`
+	DateEndUnix   int64  `json:"dateEndUnix,omitempty"`
+	CompanyIcon   *Photo `json:"companyIcon,omitempty"`
+	Location      string `json:"location,omitempty"`
 }
 
 // SyncWorkAndEducation retrieve Profile's work/occupation history and education history
 func (prof *Profile) SyncWorkAndEducation() error {
-	// var node *raw.Node
-	// for _, edge := range prof.ProfileSections.Edges {
-	// 	if edge.Node != nil {
-	// 		if edge.Node.SectionType == SectionAbout {
-	// 			node = edge.Node
-	// 			break
-	// 		}
-	// 	}
-	// }
+	var section *jsonextract.JSON
+	for _, val := range prof.profileSections.KeyVal["edges"].Vals {
+		node, ok := val.KeyVal["node"]
+		if !ok {
+			continue
+		}
 
-	// var collection raw.Node
-	// for _, col := range node.AllCollections.Nodes {
-	// 	if col.TabKey == WorkAndEducation {
-	// 		collection = col
-	// 		break
-	// 	}
-	// }
+		if val, ok := node.KeyVal["section_type"]; ok && val.Val.(string) == SectionAbout {
+			section = node
+			break
+		}
+	}
 
-	// vars := *prof.AboutSectionVars.Variables
-	// vars.CollectionToken = collection.ID
+	if section == nil {
+		return errors.New("Important tokens for About section is not founs")
+	}
 
-	// varsByts, err := json.Marshal(vars)
-	// if err != nil {
-	// 	return err
-	// }
+	var coll *jsonextract.JSON
+	for _, val := range section.KeyVal["all_collections"].KeyVal["nodes"].Vals {
+		tabKey, ok := val.KeyVal["tab_key"]
+		if !ok {
+			continue
+		}
 
-	// reqBody := make(url.Values)
-	// reqBody.Set("fb_api_req_friendly_name", "ProfileCometAboutAppSectionQuery")
-	// reqBody.Set("variables", string(varsByts))
-	// reqBody.Set("doc_id", prof.AboutSectionVars.QueryID)
-	// rawBody, err := prof.fb.graphQlRequest(reqBody)
-	// if err != nil {
-	// 	return err
-	// }
+		if tabKey.Val.(string) == "about_work_and_education" {
+			coll = val
+			break
+		}
+	}
 
-	// // DELETE
+	vars := prof.aboutSectionVars.KeyVal["variables"]
+	vars.KeyVal["collectionToken"].Val = coll.KeyVal["id"].Val
+	if err := vars.ReParse(); err != nil {
+		return err
+	}
+
+	// fmt.Println(string(vars.Raw.Bytes()))
+
+	reqBody := make(url.Values)
+	reqBody.Set("fb_api_req_friendly_name", "ProfileCometAboutAppSectionQuery")
+	reqBody.Set("variables", string(vars.Raw.Bytes()))
+	reqBody.Set("doc_id", prof.aboutSectionVars.KeyVal["queryID"].Val.(string))
+	rawBody, err := prof.fb.graphQlRequest(reqBody)
+	if err != nil {
+		return err
+	}
+
+	// DELETE
 	// f, _ := os.Create("raw_work_education.json")
 	// defer f.Close()
 	// f.Write(rawBody)
 
-	// jsons, err := jsonextract.JSONFromBytes(rawBody)
-	// if err != nil {
-	// 	return err
-	// }
+	jsons, err := jsonextract.FromBytes(rawBody)
+	if err != nil {
+		return err
+	}
 
-	// // DELETE
+	// DELETE
 	// jsonextract.SaveToPath(jsons, "work_education_bundle.json")
 
-	// for i, frag := range jsons {
-	// 	item := new(raw.Item)
-	// 	if err := json.Unmarshal(frag, item); err == nil {
-	// 		// DELETE
-	// 		f, _ := os.Create("work_education_try_success_" + strconv.Itoa(i) + ".json")
-	// 		defer f.Close()
-	// 		f.Write(frag)
+	for _, json := range jsons {
+		val, ok := json.KeyVal["label"]
+		if !ok {
+			continue
+		}
 
-	// 		works := extractWorks(item)
-	// 		if len(works) > 0 {
-	// 			prof.About.WorkHistory = append(prof.About.WorkHistory, works...)
-	// 		}
-
-	// 		// DELETE ELSE BLOCK
-	// 	} else {
-	// 		// DELETE
-	// 		f, _ := os.Create("work_education_try_fail_" + strconv.Itoa(i) + ".json")
-	// 		defer f.Close()
-	// 		f.Write(frag)
-	// 	}
-	// }
+		if val.Val.(string) == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
+			works := extractWorks(json)
+			prof.About.WorkHistory = works
+			break
+		}
+	}
 
 	return nil
 }
 
-func extractWorks(item *raw.Item) []Work {
+func extractWorks(json *jsonextract.JSON) []Work {
 	works := make([]Work, 0)
-	if item.Data != nil {
-		if item.Data.ActiveCollections != nil {
-			if item.Data.ActiveCollections.Nodes != nil {
-				for _, node := range item.Data.ActiveCollections.Nodes {
-					if node.StyleRenderer != nil {
-						if node.StyleRenderer.ProfileFieldSections != nil {
-							for _, section := range node.StyleRenderer.ProfileFieldSections {
-								if section.FieldSectionType == "work" {
-									if section.ProfileFields != nil {
-										if section.ProfileFields.Nodes != nil {
-											for _, node := range section.ProfileFields.Nodes {
-												// extract title
-												work := Work{Title: node.Title.Text}
+	val, ok := json.KeyVal["data"]
+	if !ok {
+		return nil
+	}
 
-												// if node.Renderer != nil {
-												// 	renderer := node.Renderer
+	val, ok = val.KeyVal["activeCollections"]
+	if !ok {
+		return nil
+	}
 
-												// 	if renderer.Field
-												// }
+	val, ok = val.KeyVal["nodes"]
+	if !ok {
+		return nil
+	}
 
-												works = append(works, work)
+	for _, node := range val.Vals {
+		val, ok := node.KeyVal["style_renderer"]
+		if !ok {
+			continue
+		}
+
+		val, ok = val.KeyVal["profile_field_sections"]
+		if !ok {
+			continue
+		}
+
+		for _, section := range val.Vals {
+			val, ok := section.KeyVal["field_section_type"]
+			if !ok {
+				continue
+			}
+
+			if val.Val.(string) == "work" {
+				// start parsing work history
+				val, ok := section.KeyVal["profile_fields"]
+				if !ok {
+					return nil
+				}
+
+				val, ok = val.KeyVal["nodes"]
+				if !ok {
+					return nil
+				}
+
+				for i, node := range val.Vals {
+					// skip the first index because the first index is a button for add new work history
+					if i == 0 {
+						continue
+					}
+
+					// create Work and assign Title
+					work := Work{
+						Title: node.KeyVal["title"].KeyVal["text"].Val.(string),
+					}
+
+					// find company url
+					if val, ok := node.KeyVal["title"].KeyVal["ranges"]; ok {
+						for _, rng := range val.Vals {
+							val, ok := rng.KeyVal["entity"]
+							if !ok {
+								continue
+							}
+
+							val, ok = rng.KeyVal["url"]
+							if !ok {
+								continue
+							}
+
+							work.CompanyURL = val.Val.(string)
+						}
+					}
+
+					// find company icon
+					if val, ok := node.KeyVal["renderer"]; ok {
+						if val, ok := val.KeyVal["field"]; ok {
+							if val, ok := val.KeyVal["icon"]; ok {
+								work.CompanyIcon = &Photo{
+									Height: val.KeyVal["height"].Val.(int),
+									Scale:  val.KeyVal["scale"].Val.(float64),
+									URI:    val.KeyVal["uri"].Val.(string),
+									Width:  val.KeyVal["width"].Val.(int),
+								}
+							}
+						}
+					}
+
+					// find description
+					if val, ok := node.KeyVal["list_item_groups"]; ok {
+						for _, itemGroup := range val.Vals {
+							if val, ok := itemGroup.KeyVal["list_items"]; ok {
+								for _, item := range val.Vals {
+									val, ok := item.KeyVal["heading_type"]
+									if !ok {
+										continue
+									}
+
+									// description
+									if val.Val.(string) == "MEDIUM" {
+										if val, ok := item.KeyVal["text"]; ok {
+											work.Description = val.KeyVal["text"].Val.(string)
+										}
+									}
+
+									// can be date range or location
+									if val.Val.(string) == "LOW" {
+										if val, ok := item.KeyVal["text"]; ok {
+											// if strings contains " - ", this must be date range, otherwise a location
+											if strings.Contains(val.KeyVal["text"].Val.(string), " - ") {
+												split := strings.Split(val.KeyVal["text"].Val.(string), " - ")
+												date1, err := dateparse.ParseAny(split[0])
+												if err == nil {
+													work.DateStart = split[0]
+													work.DateStartUnix = date1.Unix()
+												}
+
+												date2, err := dateparse.ParseAny(split[1])
+												if err == nil {
+													work.DateEnd = split[1]
+													work.DateEndUnix = date2.Unix()
+												}
+
+											} else {
+												work.Location = val.KeyVal["text"].Val.(string)
 											}
 										}
 									}
@@ -116,6 +232,8 @@ func extractWorks(item *raw.Item) []Work {
 							}
 						}
 					}
+
+					works = append(works, work)
 				}
 			}
 		}
