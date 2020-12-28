@@ -181,7 +181,7 @@ func (fb *Facebook) save(path string) error {
 	return json.NewEncoder(f).Encode(conf)
 }
 
-// Load load cookies from ./fb_session.json and set to Facebook client
+// Load load config from ./fb_session.json and set to Facebook client
 func (fb *Facebook) Load() error {
 	conf, err := load("./fb_session.json")
 	if err != nil {
@@ -199,7 +199,7 @@ func (fb *Facebook) Load() error {
 	return nil
 }
 
-// LoadFromPath load cookies from path and set to Facebook client
+// LoadFromPath load config from path and set to Facebook client
 func (fb *Facebook) LoadFromPath(path string) error {
 	conf, err := load(path)
 	if err != nil {
