@@ -68,5 +68,7 @@ func (prof *Profile) SyncAbout() error {
 		return errors.New("Important tokens for About section is not found")
 	}
 
+	prof.About = new(About)
+
 	return nil
 }
