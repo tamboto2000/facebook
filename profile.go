@@ -1,8 +1,10 @@
 package facebook
 
 import (
+	"errors"
+
 	"github.com/tamboto2000/facebook/raw"
-	"github.com/tamboto2000/jsonextract"
+	"github.com/tamboto2000/jsonextract/v2"
 )
 
 // Profile represent Facebook profile
@@ -17,160 +19,302 @@ type Profile struct {
 	ProfilePhoto          *Photo `json:"profilePhoto,omitempty"`
 	Gender                string `json:"gender,omitempty"`
 	BioText               string `json:"bioText,omitempty"`
+	About                 *About `json:"about,omitempty"`
 
-	// This fields is for internal purpose, might be omited latter
-	ProfileSections *raw.TimelineNavAppSections `json:"profileSections,omitempty"`
-	Variables       *raw.Variables              `json:"variables,omitempty"`
+	profileSections  *jsonextract.JSON `json:"-"`
+	variables        *jsonextract.JSON `json:"-"`
+	aboutSectionVars *raw.Item         `json:"-"`
 
 	fb *Facebook
 }
 
 // Profile retrieve profile
 func (fb *Facebook) Profile(user string) (*Profile, error) {
-	profile := new(Profile)
 	body, err := fb.getRequest("/"+user, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	jsons, err := jsonextract.JSONFromBytes(body)
+	jsons, err := jsonextract.FromBytesWithOpt(body, jsonextract.Option{
+		ParseObj:         true,
+		ParseArray:       true,
+		IgnoreEmptyArray: true,
+		IgnoreEmptyObj:   true,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	// DELETE
-	// jsonextract.Save(jsons)
+	prof := &Profile{fb: fb}
+	if !composeProfile(jsons, prof) {
+		return nil, errors.New("required data is missing")
+	}
 
-	parser := newParser(jsons)
-	parser.run(func(val interface{}) bool {
-		item := val.(*raw.Item)
-		if item.RootView != nil {
-			if item.RootView.Props != nil {
-				props := item.RootView.Props
-				profile.ID = props.UserID
-				profile.Username = props.UserVanity
+	return prof, nil
+}
 
-				return true
-			}
+func composeProfile(jsons []*jsonextract.JSON, prof *Profile) bool {
+	if !findObj(jsons, func(json *jsonextract.JSON) bool {
+		val, ok := json.KeyVal["require"]
+		if !ok {
+			return false
 		}
 
+		// try to confirm that this object contains the profile preview data
+		if !findObj(val.Vals, func(json *jsonextract.JSON) bool {
+			val, ok := json.KeyVal["__dr"]
+			if !ok {
+				return false
+			}
+
+			if val.Kind == jsonextract.String && val.Val.(string) == "ProfileCometTabs_cometProfileTabs$normalization.graphql" {
+				return true
+			}
+
+			return false
+		}) {
+			return false
+		}
+
+		if !findObj(val.Vals, func(json *jsonextract.JSON) bool {
+			val, ok := json.KeyVal["__bbox"]
+			if !ok {
+				return false
+			}
+
+			// find profile variables (optional)
+			if val, ok := val.KeyVal["variables"]; ok {
+				prof.variables = val
+			}
+
+			val, ok = val.KeyVal["result"]
+			if !ok {
+				return false
+			}
+
+			val, ok = val.KeyVal["data"]
+			if !ok {
+				return false
+			}
+
+			val, ok = val.KeyVal["user"]
+			if !ok {
+				return false
+			}
+
+			// find user id
+			if val, ok := val.KeyVal["id"]; ok {
+				prof.ID = val.Val.(string)
+			} else {
+				return false
+			}
+
+			// find name
+			if val, ok := val.KeyVal["name"]; ok {
+				prof.Name = val.Val.(string)
+			} else {
+				return false
+			}
+
+			// find alternate name (optional)
+			if val, ok := val.KeyVal["alternate_name"]; ok {
+				prof.AlternateName = val.Val.(string)
+			}
+
+			// find cover photo (optional)
+			if val, ok := val.KeyVal["cover_photo"]; ok {
+				if photo, ok := val.KeyVal["photo"]; ok {
+					if img, ok := photo.KeyVal["image"]; ok {
+						prof.CoverPhoto = &Photo{
+							ID:     photo.KeyVal["id"].Val.(string),
+							URI:    img.KeyVal["uri"].Val.(string),
+							Width:  img.KeyVal["width"].Val.(int),
+							Height: img.KeyVal["height"].Val.(int),
+							URL:    photo.KeyVal["url"].Val.(string),
+						}
+					}
+				}
+			}
+
+			// find profile section and collection token
+			if val, ok := val.KeyVal["profile_tabs"]; ok {
+				if val, ok := val.KeyVal["profile_user"]; ok {
+					if val, ok := val.KeyVal["timeline_nav_app_sections"]; ok {
+						prof.profileSections = val
+					}
+				}
+			}
+
+			return true
+		}) {
+			return false
+		}
+
+		return true
+	}) {
 		return false
-	}, new(raw.Item), true, false)
+	}
 
-	parser.reset()
+	// find username (optional, username can be private)
+	findObj(jsons, func(json *jsonextract.JSON) bool {
+		val, ok := json.KeyVal["require"]
+		if !ok {
+			return false
+		}
 
-	// Extract profile preview
-	// Get profile name first
-	parser.run(func(val interface{}) bool {
-		item := val.(*raw.Item)
-		composeProfile(item, profile)
-		if profile.Name != "" {
+		if !findObj(val.Vals, func(json *jsonextract.JSON) bool {
+			val, ok := json.KeyVal["rootView"]
+			if !ok {
+				return false
+			}
+
+			val, ok = val.KeyVal["props"]
+			if !ok {
+				return false
+			}
+
+			val, ok = val.KeyVal["userVanity"]
+			if !ok {
+				return false
+			}
+
+			prof.Username = val.Val.(string)
+
+			return false
+		}) {
+			return false
+		}
+
+		return true
+	})
+
+	// find gender (optional)
+	findObj(jsons, func(json *jsonextract.JSON) bool {
+		val, ok := json.KeyVal["require"]
+		if !ok {
+			return false
+		}
+
+		if findObj(val.Vals, func(json *jsonextract.JSON) bool {
+			val, ok := json.KeyVal["__bbox"]
+			if !ok {
+				return false
+			}
+
+			val, ok = val.KeyVal["result"]
+			if !ok {
+				return false
+			}
+
+			val, ok = val.KeyVal["data"]
+			if !ok {
+				return false
+			}
+
+			if val, ok = val.KeyVal["gender"]; ok {
+				prof.Gender = val.Val.(string)
+				return true
+			}
+
+			return false
+		}) {
 			return true
 		}
 
 		return false
-	}, new(raw.Item), true, false)
+	})
 
-	// Reset parser and search for other data
-	parser.reset()
-	parser.run(func(val interface{}) bool {
-		item := val.(*raw.Item)
-		composeProfile(item, profile)
+	// find profile photo (optional)
+	findObj(jsons, func(json *jsonextract.JSON) bool {
+		val, ok := json.KeyVal["require"]
+		if !ok {
+			return false
+		}
+
+		if findObj(val.Vals, func(json *jsonextract.JSON) bool {
+			val, ok := json.KeyVal["__bbox"]
+			if !ok {
+				return false
+			}
+
+			val, ok = val.KeyVal["result"]
+			if !ok {
+				return false
+			}
+
+			val, ok = val.KeyVal["data"]
+			if !ok {
+				return false
+			}
+
+			profPhoto, ok := val.KeyVal["profilePhoto"]
+			if !ok {
+				return false
+			}
+
+			profPicNormal, ok := val.KeyVal["profilePicNormal"]
+			if !ok {
+				return false
+			}
+
+			prof.ProfilePhoto = &Photo{
+				ID:     profPhoto.KeyVal["id"].Val.(string),
+				URI:    profPicNormal.KeyVal["uri"].Val.(string),
+				Width:  profPhoto.KeyVal["viewer_image"].KeyVal["width"].Val.(int),
+				Height: profPhoto.KeyVal["viewer_image"].KeyVal["height"].Val.(int),
+				URL:    profPhoto.KeyVal["url"].Val.(string),
+			}
+
+			return true
+		}) {
+			return true
+		}
 
 		return false
-	}, new(raw.Item), true, false)
+	})
 
-	profile.fb = fb
-
-	return profile, nil
-}
-
-func composeProfile(item *raw.Item, prof *Profile) {
-	if item.Require != nil {
-		data := make([][]byte, 0)
-		for _, d := range item.Require {
-			data = append(data, d)
-		}
-
-		parser := newParser(data)
-		parser.run(func(val interface{}) bool {
-			item := val.(*raw.Item)
-			composeProfile(item, prof)
-
+	// find profile bio (optional)
+	findObj(jsons, func(json *jsonextract.JSON) bool {
+		val, ok := json.KeyVal["require"]
+		if !ok {
 			return false
-		}, new(raw.Item), true, false)
-
-		return
-	}
-
-	if item.Bbox != nil {
-		if item.Bbox.Result != nil {
-			if item.Bbox.Result.Data != nil {
-				data := item.Bbox.Result.Data
-				if prof.Name == "" && data.User != nil {
-					if data.User.ID == prof.ID {
-						// Extract name
-						user := item.Bbox.Result.Data.User
-						prof.Name = user.Name
-
-						// Extract Alternate Name
-						prof.AlternateName = user.AlternateName
-
-						// Extract cover photo
-						if user.CoverPhoto != nil {
-							if user.CoverPhoto.Photo != nil {
-								if user.CoverPhoto.Photo.Image != nil {
-									photo := user.CoverPhoto.Photo
-									prof.CoverPhoto = &Photo{
-										ID:     photo.ID,
-										URI:    photo.Image.URI,
-										Width:  photo.Image.Width,
-										Height: photo.Image.Height,
-										URL:    photo.URL,
-									}
-								}
-							}
-						}
-
-						// Extract profile sections and variables
-						if user.ProfileTabs != nil {
-							if user.ProfileTabs.ProfileUser != nil {
-								if user.ProfileTabs.ProfileUser.TimelineNavAppSections != nil {
-									prof.ProfileSections = user.ProfileTabs.ProfileUser.TimelineNavAppSections
-									prof.Variables = item.Bbox.Variables
-								}
-							}
-						}
-					}
-
-					return
-				}
-
-				// Extract gender
-				if data.Gender != "" && prof.Gender == "" {
-					prof.Gender = data.Gender
-				}
-
-				// Extract Profile Photo
-				if data.ProfilePhoto != nil && data.ProfilePicNormal != nil && prof.ProfilePhoto == nil {
-					prof.ProfilePhoto = &Photo{
-						URL:    data.ProfilePhoto.URL,
-						ID:     data.ProfilePhoto.ID,
-						Height: data.ProfilePhoto.ViewerImage.Height,
-						Width:  data.ProfilePhoto.ViewerImage.Width,
-						URI:    data.ProfilePicNormal.URI,
-					}
-				}
-
-				// Extract bio
-				if data.ProfileIntroCard != nil && prof.BioText == "" {
-					if data.ProfileIntroCard.Bio != nil {
-						if data.ProfileIntroCard.Bio.Text != "" {
-							prof.BioText = data.ProfileIntroCard.Bio.Text
-						}
-					}
-				}
-			}
 		}
-	}
+
+		if findObj(val.Vals, func(json *jsonextract.JSON) bool {
+			val, ok := json.KeyVal["__bbox"]
+			if !ok {
+				return false
+			}
+
+			val, ok = val.KeyVal["result"]
+			if !ok {
+				return false
+			}
+
+			val, ok = val.KeyVal["data"]
+			if !ok {
+				return false
+			}
+
+			val, ok = val.KeyVal["profile_intro_card"]
+			if !ok {
+				return false
+			}
+
+			val, ok = val.KeyVal["bio"]
+			if !ok {
+				return false
+			}
+
+			prof.BioText = val.KeyVal["text"].Val.(string)
+
+			return true
+		}) {
+			return true
+		}
+
+		return false
+	})
+
+	return true
 }

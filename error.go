@@ -1,8 +1,6 @@
 package facebook
 
-// ErrInvalidSession occured when provided session cookies is invalid
-type ErrInvalidSession string
+import "errors"
 
-func (ErrInvalidSession *ErrInvalidSession) Error() string {
-	return "Invalid session cookie"
-}
+// ErrInvalidSession occured when provided session cookies is invalid
+var ErrInvalidSession = errors.New("Invalid session cookie")

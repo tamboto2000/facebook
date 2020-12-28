@@ -54,6 +54,7 @@ func (fb *Facebook) prepSiteData(std *SiteData) url.Values {
 	final.Set("dpr", fmt.Sprintf("%g", std.PR))
 	final.Set("__ccg", "EXCELLENT")
 	final.Set("__rev", strconv.Itoa(std.ServerRevision))
+	final.Set("__hsi", std.Hsi)
 	final.Set("__comet_req", "1")
 	final.Set("__comet_env", "fb")
 	final.Set("fb_dtsg", fb.FbDtsg)

@@ -16,6 +16,13 @@ type Item struct {
 	URL                  string            `json:"url,omitempty"`
 	Params               *Params           `json:"params,omitempty"`
 	RoutePath            string            `json:"routePath,omitempty"`
+	PreloaderID          string            `json:"preloaderID,omitempty"`
+	QueryID              string            `json:"queryID,omitempty"`
+	Variables            *Variables        `json:"variables,omitempty"`
+	Label                string            `json:"label,omitempty"`
+	// Path                 []Path            `json:"path,omitempty"`
+	Data       *Data       `json:"data,omitempty"`
+	Extensions *Extensions `json:"extensions,omitempty"`
 }
 
 type EntityKeyConfig struct {
@@ -49,6 +56,8 @@ type Props struct {
 type Meta struct {
 	Title     string      `json:"title,omitempty"`
 	Accessory interface{} `json:"accessory,omitempty"`
+	B         string      `json:"/_B/,omitempty"`
+	E         string      `json:"/_E/,omitempty"`
 }
 
 type Params struct {

@@ -10,8 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/tamboto2000/facebook/raw"
-	"github.com/tamboto2000/jsonextract"
+	"github.com/tamboto2000/jsonextract/v2"
 )
 
 const (
@@ -20,15 +19,8 @@ const (
 
 // Profile section types
 const (
-	About = "ABOUT"
+	SectionAbout = "ABOUT"
 )
-
-// Collection types
-const (
-	WorkAndEducation = "about_work_and_education"
-)
-
-var rootURL = "https://www.facebook.com"
 
 // Config saves Facebook client settings
 type Config struct {
@@ -38,16 +30,6 @@ type Config struct {
 	Cookies  []*http.Cookie
 }
 
-// GraphQLVars contains GraphQL variables for request Facebook GraphQL API
-type GraphQLVars struct {
-	AppSectionFeedKey string `json:"appSectionFeedKey"`
-	CollectionToken   string `json:"collectionToken"`
-	RawSectionToken   string `json:"rawSectionToken"`
-	Scale             string `json:"scale"`
-	SectionToken      string `json:"sectionToken"`
-	UserID            string `json:"userID"`
-}
-
 // Facebook is Facebook client
 type Facebook struct {
 	cookies  *sync.Map
@@ -55,6 +37,8 @@ type Facebook struct {
 	FbDtsg   string
 	Jazoest  string
 	SiteData *SiteData
+
+	host string
 }
 
 // New initialize Facebook client
@@ -78,9 +62,12 @@ func (fb *Facebook) SetCookieStr(cookie string) {
 
 // Init initialize Facebook client
 func (fb *Facebook) Init() error {
+	fb.host = "https://www.facebook.com"
+
+RETRY:
 	cUser, ok := fb.cookies.Load("c_user")
 	if !ok {
-		return new(ErrInvalidSession)
+		return ErrInvalidSession
 	}
 
 	userID := cUser.(*http.Cookie).Value
@@ -90,63 +77,74 @@ func (fb *Facebook) Init() error {
 		return err
 	}
 
-	jsons, err := jsonextract.JSONFromBytes(body)
+	jsons, err := jsonextract.FromBytes(body)
 	if err != nil {
 		return err
 	}
 
-	// extract SiteData
-	parser := newParser(jsons)
-	parser.run(func(val interface{}) bool {
-		std := val.(*SiteData)
-		if std.SpinB != "" && std.SpinR > 0 && std.SpinT > 0 {
-			fb.SiteData = std
+	if !findObj(jsons, func(json *jsonextract.JSON) bool {
+		val, ok := json.KeyVal["require"]
+		if !ok {
+			return false
+		}
+
+		if findObj(val.Vals, func(json *jsonextract.JSON) bool {
+			val, ok := json.KeyVal["__bbox"]
+			if !ok {
+				return false
+			}
+
+			val, ok = val.KeyVal["result"]
+			if !ok {
+				return false
+			}
+
+			val, ok = val.KeyVal["data"]
+			if !ok {
+				return false
+			}
+
+			val, ok = val.KeyVal["login_data"]
+			if !ok {
+				return false
+			}
+
+			if val, ok := val.KeyVal["lsd"]; ok {
+				if val, ok := val.KeyVal["value"]; ok {
+					fb.FbDtsg = val.Val.(string)
+				} else {
+					return false
+				}
+			} else {
+				return false
+			}
+
+			if val, ok := val.KeyVal["jazoest"]; ok {
+				if val, ok := val.KeyVal["value"]; ok {
+					fb.Jazoest = val.Val.(string)
+				} else {
+					return false
+				}
+			} else {
+				return false
+			}
+
+			return true
+		}) {
 			return true
 		}
 
 		return false
-	}, new(SiteData), true, false)
-
-	// extract fb_dtsg and jazoest
-	parser.reset()
-	parser.run(func(val interface{}) bool {
-		item := val.(*raw.Item)
-		if item.Require != nil {
-			data := make([][]byte, 0)
-			for _, jr := range item.Require {
-				data = append(data, jr)
-			}
-
-			parser := newParser(data)
-			parser.run(func(val interface{}) bool {
-				item := val.(*raw.Item)
-				if item.Bbox != nil {
-					if item.Bbox.Result != nil {
-						if item.Bbox.Result.Data != nil {
-							if item.Bbox.Result.Data.LoginData != nil {
-								if item.Bbox.Result.Data.LoginData.Lsd != nil && item.Bbox.Result.Data.LoginData.Jazoest != nil {
-									fb.Jazoest = item.Bbox.Result.Data.LoginData.Jazoest.Value
-									fb.FbDtsg = item.Bbox.Result.Data.LoginData.Lsd.Value
-
-									return true
-								}
-							}
-						}
-					}
-				}
-
-				return false
-			}, new(raw.Item), true, false)
+	}) {
+		if fb.host == "https://www.facebook.com" {
+			fb.host = "https://web.facebook.com"
+			goto RETRY
 		}
 
-		return false
-	}, new(raw.Item), true, false)
-
-	if fb.SiteData != nil && fb.FbDtsg != "" && fb.Jazoest != "" {
-		return nil
+		return ErrInvalidSession
 	}
 
-	return new(ErrInvalidSession)
+	return nil
 }
 
 // Save saves session to ./fb_session.json
@@ -258,7 +256,7 @@ func (fb *Facebook) getRequest(path string, query url.Values) ([]byte, error) {
 		"Upgrade-Insecure-Requests": {"1"},
 	}
 
-	urlParsed, err := url.Parse(rootURL + path)
+	urlParsed, err := url.Parse(fb.host + path)
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +307,7 @@ func (fb *Facebook) graphQlRequest(body url.Values) ([]byte, error) {
 		siteData[k] = v
 	}
 
-	req, err := http.NewRequest("POST", rootURL+"/api/graphql/", strings.NewReader(siteData.Encode()))
+	req, err := http.NewRequest("POST", fb.host+"/api/graphql/", strings.NewReader(siteData.Encode()))
 	if err != nil {
 		return nil, err
 	}

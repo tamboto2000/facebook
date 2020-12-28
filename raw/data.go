@@ -19,19 +19,20 @@ type Data struct {
 	SketchSeed2          interface{}       `json:"sketch_seed2,omitempty"`
 	Rounds               interface{}       `json:"rounds,omitempty"`
 	PublicKey            string            `json:"public_key,omitempty"`
-	KeyID                int64             `json:"key_id,omitempty"`
+	KeyID                int               `json:"key_id,omitempty"`
 	PrefillSource        interface{}       `json:"prefill_source,omitempty"`
 	IddUserCryptedUID    interface{}       `json:"idd_user_crypted_uid,omitempty"`
 	Locale               string            `json:"locale,omitempty"`
 	Lsd                  *KeyVal           `json:"lsd,omitempty"`
 	Jazoest              *KeyVal           `json:"jazoest,omitempty"`
 	LoginSource          string            `json:"login_source,omitempty"`
-	Timestamp            int64             `json:"timestamp,omitempty"`
+	Timestamp            int               `json:"timestamp,omitempty"`
 	Lgnrnd               string            `json:"lgnrnd,omitempty"`
 	SendScreenDimensions bool              `json:"send_screen_dimensions,omitempty"`
 	LoginData            *Data             `json:"login_data,omitempty"`
 	ProfileIntroCard     *ProfileIntroCard `json:"profile_intro_card,omitempty"`
 	ShouldUsePageRename  bool              `json:"should_use_page_rename,omitempty"`
+	ActiveCollections    *Collection       `json:"activeCollections,omitempty"`
 }
 
 type Viewer struct {
