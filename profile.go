@@ -3,7 +3,6 @@ package facebook
 import (
 	"errors"
 
-	"github.com/tamboto2000/facebook/raw"
 	"github.com/tamboto2000/jsonextract/v2"
 )
 
@@ -23,7 +22,7 @@ type Profile struct {
 
 	profileSections  *jsonextract.JSON `json:"-"`
 	variables        *jsonextract.JSON `json:"-"`
-	aboutSectionVars *raw.Item         `json:"-"`
+	aboutSectionVars *jsonextract.JSON `json:"-"`
 
 	fb *Facebook
 }
