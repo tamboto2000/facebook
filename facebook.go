@@ -2,6 +2,7 @@ package facebook
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/url"
 	"os"
@@ -24,7 +25,7 @@ const (
 type Config struct {
 	FbDtsg   string
 	Jazoest  string
-	SiteData *SiteData
+	SiteData *jsonextract.JSON
 	Cookies  []*http.Cookie
 }
 
@@ -34,7 +35,7 @@ type Facebook struct {
 	client   *http.Client
 	FbDtsg   string
 	Jazoest  string
-	SiteData *SiteData
+	SiteData *jsonextract.JSON
 
 	host string
 }
@@ -79,6 +80,9 @@ RETRY:
 	if err != nil {
 		return err
 	}
+
+	// DELETE
+	jsonextract.Save(jsons)
 
 	if !findObj(jsons, func(json *jsonextract.JSON) bool {
 		val, ok := json.KeyVal["require"]
@@ -140,6 +144,31 @@ RETRY:
 		}
 
 		return ErrInvalidSession
+	}
+
+	// find site data
+	if !findObj(jsons, func(json *jsonextract.JSON) bool {
+		val, ok := json.KeyVal["define"]
+		if !ok {
+			return false
+		}
+
+		if val.Kind == jsonextract.Array {
+			if findObj(val.Vals, func(json *jsonextract.JSON) bool {
+				if _, ok := json.KeyVal["__spin_r"]; ok {
+					fb.SiteData = json
+					return true
+				}
+
+				return false
+			}) {
+				return true
+			}
+		}
+
+		return false
+	}) {
+		return errors.New("SiteData tokens not found")
 	}
 
 	return nil
