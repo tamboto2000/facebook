@@ -331,20 +331,3 @@ func (fb *Facebook) graphQlRequest(body url.Values) ([]byte, error) {
 
 	return buff.Bytes(), nil
 }
-
-func decompressResponseBody(resp *http.Response) (*bytes.Buffer, error) {
-	buff := new(bytes.Buffer)
-	switch resp.Header.Get("Content-Encoding") {
-	case "gzip":
-		reader, err := gzip.NewReader(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		buff.ReadFrom(reader)
-	default:
-		buff.ReadFrom(resp.Body)
-	}
-
-	return buff, nil
-}

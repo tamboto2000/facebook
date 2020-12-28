@@ -1,6 +1,10 @@
 package facebook
 
 import (
+	"bytes"
+	"compress/gzip"
+	"net/http"
+
 	"github.com/tamboto2000/jsonextract/v2"
 )
 
@@ -26,4 +30,21 @@ func findObj(jsons []*jsonextract.JSON, onFound func(json *jsonextract.JSON) boo
 	}
 
 	return false
+}
+
+func decompressResponseBody(resp *http.Response) (*bytes.Buffer, error) {
+	buff := new(bytes.Buffer)
+	switch resp.Header.Get("Content-Encoding") {
+	case "gzip":
+		reader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		buff.ReadFrom(reader)
+	default:
+		buff.ReadFrom(resp.Body)
+	}
+
+	return buff, nil
 }
