@@ -16,6 +16,7 @@ const (
 type About struct {
 	WorkHistory      []Work      `json:"workHistory,omitempty"`
 	EducationHistory []Education `json:"educationHistories,omitempty"`
+	PlacesLived      []Place     `json:"placesLived,omitempty"`
 }
 
 // SyncAbout fetch required tokens for requesting profile about data collections
