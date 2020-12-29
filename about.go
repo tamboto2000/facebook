@@ -2,14 +2,16 @@ package facebook
 
 import (
 	"errors"
+	"net/url"
 	"strings"
 
 	"github.com/tamboto2000/jsonextract/v2"
 )
 
-// About Section's collections
+// about Section's collections
 const (
-	WorkAndEducation = "about_work_and_education"
+	workAndEducation = "about_work_and_education"
+	placesLived      = "about_places"
 )
 
 // About contains profile about section data
@@ -36,9 +38,6 @@ func (prof *Profile) SyncAbout() error {
 	if err != nil {
 		return err
 	}
-
-	// DELETE
-	// jsonextract.SaveToPath(jsons, "raw_about.json")
 
 	// find profile about section vars
 	if !findObj(jsons, func(json *jsonextract.JSON) bool {
@@ -73,4 +72,53 @@ func (prof *Profile) SyncAbout() error {
 	prof.About = new(About)
 
 	return nil
+}
+
+func (prof *Profile) reqAboutCollection(c string) ([]*jsonextract.JSON, error) {
+	var section *jsonextract.JSON
+	for _, val := range prof.profileSections.KeyVal["edges"].Vals {
+		node, ok := val.KeyVal["node"]
+		if !ok {
+			continue
+		}
+
+		if val, ok := node.KeyVal["section_type"]; ok && val.Val.(string) == SectionAbout {
+			section = node
+			break
+		}
+	}
+
+	if section == nil {
+		return nil, errors.New("Important tokens for About section is not founs")
+	}
+
+	var coll *jsonextract.JSON
+	for _, val := range section.KeyVal["all_collections"].KeyVal["nodes"].Vals {
+		tabKey, ok := val.KeyVal["tab_key"]
+		if !ok {
+			continue
+		}
+
+		if tabKey.Val.(string) == c {
+			coll = val
+			break
+		}
+	}
+
+	vars := prof.aboutSectionVars.KeyVal["variables"]
+	vars.KeyVal["collectionToken"].Val = coll.KeyVal["id"].Val
+	if err := vars.ReParse(); err != nil {
+		return nil, err
+	}
+
+	reqBody := make(url.Values)
+	reqBody.Set("fb_api_req_friendly_name", "ProfileCometAboutAppSectionQuery")
+	reqBody.Set("variables", string(vars.Raw.Bytes()))
+	reqBody.Set("doc_id", prof.aboutSectionVars.KeyVal["queryID"].Val.(string))
+	rawBody, err := prof.fb.graphQlRequest(reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	return jsonextract.FromBytes(rawBody)
 }

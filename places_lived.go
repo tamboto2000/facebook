@@ -1,9 +1,6 @@
 package facebook
 
 import (
-	"errors"
-	"net/url"
-
 	"github.com/tamboto2000/jsonextract/v2"
 )
 
@@ -17,59 +14,7 @@ type Place struct {
 
 // SyncPlacesLived retrieve profile's places lived history
 func (prof *Profile) SyncPlacesLived() error {
-	var section *jsonextract.JSON
-	for _, val := range prof.profileSections.KeyVal["edges"].Vals {
-		node, ok := val.KeyVal["node"]
-		if !ok {
-			continue
-		}
-
-		if val, ok := node.KeyVal["section_type"]; ok && val.Val.(string) == SectionAbout {
-			section = node
-			break
-		}
-	}
-
-	if section == nil {
-		return errors.New("Important tokens for About section is not founs")
-	}
-
-	var coll *jsonextract.JSON
-	for _, val := range section.KeyVal["all_collections"].KeyVal["nodes"].Vals {
-		tabKey, ok := val.KeyVal["tab_key"]
-		if !ok {
-			continue
-		}
-
-		if tabKey.Val.(string) == "about_places" {
-			coll = val
-			break
-		}
-	}
-
-	vars := prof.aboutSectionVars.KeyVal["variables"]
-	vars.KeyVal["collectionToken"].Val = coll.KeyVal["id"].Val
-	if err := vars.ReParse(); err != nil {
-		return err
-	}
-
-	// fmt.Println(string(vars.Raw.Bytes()))
-
-	reqBody := make(url.Values)
-	reqBody.Set("fb_api_req_friendly_name", "ProfileCometAboutAppSectionQuery")
-	reqBody.Set("variables", string(vars.Raw.Bytes()))
-	reqBody.Set("doc_id", prof.aboutSectionVars.KeyVal["queryID"].Val.(string))
-	rawBody, err := prof.fb.graphQlRequest(reqBody)
-	if err != nil {
-		return err
-	}
-
-	// DELETE
-	// f, _ := os.Create("raw_work_education.json")
-	// defer f.Close()
-	// f.Write(rawBody)
-
-	jsons, err := jsonextract.FromBytes(rawBody)
+	jsons, err := prof.reqAboutCollection(placesLived)
 	if err != nil {
 		return err
 	}
