@@ -22,6 +22,7 @@ type SocialLink struct {
 	Type            string `json:"type"`
 }
 
+// BasicInfo contains profile's about basic info, such as gender, birthday, sexual preferences, etc.
 type BasicInfo struct {
 	Gender         string `json:"gender,omitempty"`
 	Birthday       string `json:"birthday,omitempty"`
