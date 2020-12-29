@@ -82,7 +82,7 @@ RETRY:
 	}
 
 	// DELETE
-	jsonextract.Save(jsons)
+	// jsonextract.Save(jsons)
 
 	if !findObj(jsons, func(json *jsonextract.JSON) bool {
 		val, ok := json.KeyVal["require"]
