@@ -10,15 +10,17 @@ import (
 
 // about Section's collections
 const (
-	workAndEducation = "about_work_and_education"
-	placesLived      = "about_places"
+	workAndEducation    = "about_work_and_education"
+	placesLived         = "about_places"
+	contactAndBasicInfo = "about_contact_and_basic_info"
 )
 
 // About contains profile about section data
 type About struct {
-	WorkHistory      []Work      `json:"workHistory,omitempty"`
-	EducationHistory []Education `json:"educationHistories,omitempty"`
-	PlacesLived      []Place     `json:"placesLived,omitempty"`
+	WorkHistory         []Work               `json:"workHistory,omitempty"`
+	EducationHistory    []Education          `json:"educationHistories,omitempty"`
+	PlacesLived         []Place              `json:"placesLived,omitempty"`
+	ContactAndBasicInfo *ContactAndBasicInfo `json:"contactAndBasicInfo,omitempty"`
 }
 
 // SyncAbout fetch required tokens for requesting profile about data collections
