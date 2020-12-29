@@ -10,17 +10,19 @@ import (
 
 // about Section's collections
 const (
-	workAndEducation    = "about_work_and_education"
-	placesLived         = "about_places"
-	contactAndBasicInfo = "about_contact_and_basic_info"
+	workAndEducation       = "about_work_and_education"
+	placesLived            = "about_places"
+	contactAndBasicInfo    = "about_contact_and_basic_info"
+	familyAndRelationships = "about_family_and_relationships"
 )
 
 // About contains profile about section data
 type About struct {
-	WorkHistory         []Work               `json:"workHistory,omitempty"`
-	EducationHistory    []Education          `json:"educationHistories,omitempty"`
-	PlacesLived         []Place              `json:"placesLived,omitempty"`
-	ContactAndBasicInfo *ContactAndBasicInfo `json:"contactAndBasicInfo,omitempty"`
+	WorkHistory            []Work                  `json:"workHistory,omitempty"`
+	EducationHistory       []Education             `json:"educationHistories,omitempty"`
+	PlacesLived            []Place                 `json:"placesLived,omitempty"`
+	ContactAndBasicInfo    *ContactAndBasicInfo    `json:"contactAndBasicInfo,omitempty"`
+	FamilyAndRelationships *FamilyAndRelationships `json:"familyAndRelationships,omitempty"`
 }
 
 // SyncAbout fetch required tokens for requesting profile about data collections
@@ -91,7 +93,7 @@ func (prof *Profile) reqAboutCollection(c string) ([]*jsonextract.JSON, error) {
 	}
 
 	if section == nil {
-		return nil, errors.New("Important tokens for About section is not founs")
+		return nil, errors.New("Important tokens for About section is not found")
 	}
 
 	var coll *jsonextract.JSON
