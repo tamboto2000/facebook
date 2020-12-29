@@ -24,12 +24,23 @@ type Work struct {
 
 // Education contain education information
 type Education struct {
-	Title          string   `json:"title,omitempty"`
-	SchoolURL      string   `json:"schoolUrl,omitempty"`
-	Degree         string   `json:"degree,omitempty"`
-	Concentrations []string `json:"concentrations,omitempty"`
-	Description    string   `json:"description,omitempty"`
-	SchoolIcon     *Photo   `json:"schoolIcon,omitempty"`
+	Title         string `json:"title,omitempty"`
+	SchoolURL     string `json:"schoolUrl,omitempty"`
+	DateStart     string `json:"dateStart,omitempty"`
+	DateStartUnix int64  `json:"dateStartUnix,omitempty"`
+	DateEnd       string `json:"dateEnd,omitempty"`
+	DateEndUnix   int64  `json:"dateEndUnix,omitempty"`
+	// This field contains degree, concentrations, and description, if any.
+	// Why I can't separate these data to different fields? Unfortunately
+	// data from Facebook GraphQL API is not specified all data to which data which,
+	// no flag, no tag, no reference resource id, just spitting data according to view
+	// position. But this only apply to college type, for high_school the description
+	// can be assiggned on separate field
+	OtherInfo   []string `json:"otherInfo,omitempty"`
+	Description string   `json:"description,omitempty"`
+	SchoolIcon  *Photo   `json:"schoolIcon,omitempty"`
+	// Only assigned if type is high_school
+	ClassOf string `json:"classOf,omitempty"`
 	// college or high_school
 	Type string `json:"type,omitempty"`
 }
@@ -94,7 +105,7 @@ func (prof *Profile) SyncWorkAndEducation() error {
 	}
 
 	// DELETE
-	jsonextract.SaveToPath(jsons, "work_education_bundle.json")
+	// jsonextract.SaveToPath(jsons, "work_education_bundle.json")
 
 	for _, json := range jsons {
 		val, ok := json.KeyVal["label"]
@@ -225,16 +236,18 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 											// if strings contains " - ", this must be date range, otherwise a location
 											if strings.Contains(val.KeyVal["text"].Val.(string), " - ") {
 												split := strings.Split(val.KeyVal["text"].Val.(string), " - ")
-												date1, err := dateparse.ParseAny(split[0])
-												if err == nil {
-													work.DateStart = split[0]
-													work.DateStartUnix = date1.Unix()
-												}
+												if len(split) > 1 {
+													date1, err := dateparse.ParseAny(split[0])
+													if err == nil {
+														work.DateStart = split[0]
+														work.DateStartUnix = date1.Unix()
+													}
 
-												date2, err := dateparse.ParseAny(split[1])
-												if err == nil {
-													work.DateEnd = split[1]
-													work.DateEndUnix = date2.Unix()
+													date2, err := dateparse.ParseAny(split[1])
+													if err == nil {
+														work.DateEnd = split[1]
+														work.DateEndUnix = date2.Unix()
+													}
 												}
 
 											} else {
@@ -284,6 +297,115 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 											Scale:  float64(val.KeyVal["scale"].Val.(int)),
 											URI:    val.KeyVal["uri"].Val.(string),
 											Width:  val.KeyVal["width"].Val.(int),
+										}
+									}
+								}
+							}
+
+							// find date range, degree, concentrations, and description
+							if val, ok := node.KeyVal["list_item_groups"]; ok {
+								for _, val := range val.Vals {
+									if val, ok := val.KeyVal["list_items"]; ok {
+										for _, val := range val.Vals {
+											heading, ok := val.KeyVal["heading_type"]
+											if !ok {
+												continue
+											}
+
+											headStr := heading.Val.(string)
+
+											// extract date range
+											if headStr == "LOW" {
+												split := strings.Split(val.KeyVal["text"].KeyVal["text"].Val.(string), " - ")
+												if len(split) > 1 {
+													date1, err := dateparse.ParseAny(split[0])
+													if err == nil {
+														education.DateStart = split[0]
+														education.DateStartUnix = date1.Unix()
+													}
+
+													date2, err := dateparse.ParseAny(split[1])
+													if err == nil {
+														education.DateEnd = split[1]
+														education.DateEndUnix = date2.Unix()
+													}
+												}
+											}
+
+											// extract other info, like degree, concentrations, and description
+											if headStr == "MEDIUM" {
+												education.OtherInfo = append(education.OtherInfo, val.KeyVal["text"].KeyVal["text"].Val.(string))
+											}
+										}
+									}
+								}
+							}
+
+							educations = append(educations, education)
+						}
+					}
+				}
+			}
+
+			if val.Val.(string) == "secondary_school" {
+				if val, ok := section.KeyVal["profile_fields"]; ok {
+					if val, ok := val.KeyVal["nodes"]; ok {
+						for i, node := range val.Vals {
+							if i == 0 {
+								continue
+							}
+
+							education := Education{
+								Title: node.KeyVal["title"].KeyVal["text"].Val.(string),
+								Type:  "high_school",
+							}
+
+							// find school url
+							if val, ok := node.KeyVal["title"].KeyVal["ranges"]; ok {
+								for _, rng := range val.Vals {
+									if val, ok := rng.KeyVal["entity"]; ok {
+										if val, ok := val.KeyVal["url"]; ok {
+											education.SchoolURL = val.Val.(string)
+										}
+									}
+								}
+							}
+
+							// find school icon
+							if val, ok := node.KeyVal["renderer"]; ok {
+								if val, ok := val.KeyVal["field"]; ok {
+									if val, ok := val.KeyVal["icon"]; ok {
+										education.SchoolIcon = &Photo{
+											Height: val.KeyVal["height"].Val.(int),
+											Scale:  float64(val.KeyVal["scale"].Val.(int)),
+											URI:    val.KeyVal["uri"].Val.(string),
+											Width:  val.KeyVal["width"].Val.(int),
+										}
+									}
+								}
+							}
+
+							// find date range, degree, concentrations, and description
+							if val, ok := node.KeyVal["list_item_groups"]; ok {
+								for _, val := range val.Vals {
+									if val, ok := val.KeyVal["list_items"]; ok {
+										for _, val := range val.Vals {
+											heading, ok := val.KeyVal["heading_type"]
+											if !ok {
+												continue
+											}
+
+											headStr := heading.Val.(string)
+
+											// extract date range
+											if headStr == "LOW" {
+												education.ClassOf = val.KeyVal["text"].KeyVal["text"].Val.(string)
+											}
+
+											// extract other info, like degree, concentrations, and description
+											if headStr == "MEDIUM" {
+												education.Description = val.KeyVal["text"].KeyVal["text"].Val.(string)
+											}
 										}
 									}
 								}
