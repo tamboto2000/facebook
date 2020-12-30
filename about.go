@@ -15,6 +15,7 @@ const (
 	contactAndBasicInfo    = "about_contact_and_basic_info"
 	familyAndRelationships = "about_family_and_relationships"
 	details                = "about_details"
+	lifeEvents             = "about_life_events"
 )
 
 // About contains profile about section data
@@ -25,6 +26,7 @@ type About struct {
 	ContactAndBasicInfo    *ContactAndBasicInfo    `json:"contactAndBasicInfo,omitempty"`
 	FamilyAndRelationships *FamilyAndRelationships `json:"familyAndRelationships,omitempty"`
 	Details                *Details                `json:"details,omitempty"`
+	LifeEvents             []LifeEvents            `json:"lifeEvents,omitempty"`
 }
 
 // SyncAbout fetch required tokens for requesting profile about data collections
