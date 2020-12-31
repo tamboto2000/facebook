@@ -24,7 +24,7 @@ type Details struct {
 
 // SyncDetails retrieve profile's details info
 func (prof *Profile) SyncDetails() error {
-	jsons, err := prof.reqAboutCollection(details)
+	jsons, err := prof.reqAboutCollection(aboutDetails)
 	if err != nil {
 		return err
 	}

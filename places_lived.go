@@ -14,7 +14,7 @@ type Place struct {
 
 // SyncPlacesLived retrieve profile's places lived history
 func (prof *Profile) SyncPlacesLived() error {
-	jsons, err := prof.reqAboutCollection(placesLived)
+	jsons, err := prof.reqAboutCollection(aboutPlacesLived)
 	if err != nil {
 		return err
 	}

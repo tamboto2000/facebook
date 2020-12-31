@@ -20,9 +20,10 @@ type Profile struct {
 	BioText               string `json:"bioText,omitempty"`
 	About                 *About `json:"about,omitempty"`
 
-	profileSections  *jsonextract.JSON `json:"-"`
-	variables        *jsonextract.JSON `json:"-"`
-	aboutSectionVars *jsonextract.JSON `json:"-"`
+	profileSections   *jsonextract.JSON
+	variables         *jsonextract.JSON
+	aboutSectionVars  *jsonextract.JSON
+	friendSectionVars *jsonextract.JSON
 
 	fb *Facebook
 }

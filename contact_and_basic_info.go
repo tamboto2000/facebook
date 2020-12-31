@@ -34,7 +34,7 @@ type BasicInfo struct {
 
 // SyncContactAndBasicInfo retrieve profile's basic contact and info
 func (prof *Profile) SyncContactAndBasicInfo() error {
-	jsons, err := prof.reqAboutCollection(contactAndBasicInfo)
+	jsons, err := prof.reqAboutCollection(aboutContactAndBasicInfo)
 	if err != nil {
 		return err
 	}

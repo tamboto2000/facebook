@@ -18,7 +18,7 @@ type LifeEvents struct {
 
 // SyncLifeEvents retrieve profile's life events
 func (prof *Profile) SyncLifeEvents() error {
-	jsons, err := prof.reqAboutCollection(lifeEvents)
+	jsons, err := prof.reqAboutCollection(aboutLifeEvents)
 	if err != nil {
 		return err
 	}

@@ -10,12 +10,12 @@ import (
 
 // about Section's collections
 const (
-	workAndEducation       = "about_work_and_education"
-	placesLived            = "about_places"
-	contactAndBasicInfo    = "about_contact_and_basic_info"
-	familyAndRelationships = "about_family_and_relationships"
-	details                = "about_details"
-	lifeEvents             = "about_life_events"
+	aboutWorkAndEducation       = "about_work_and_education"
+	aboutPlacesLived            = "about_places"
+	aboutContactAndBasicInfo    = "about_contact_and_basic_info"
+	aboutFamilyAndRelationships = "about_family_and_relationships"
+	aboutDetails                = "about_details"
+	aboutLifeEvents             = "about_life_events"
 )
 
 // About contains profile about section data

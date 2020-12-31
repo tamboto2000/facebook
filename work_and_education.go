@@ -45,7 +45,7 @@ type Education struct {
 
 // SyncWorkAndEducation retrieve Profile's work/occupation history and education history
 func (prof *Profile) SyncWorkAndEducation() error {
-	jsons, err := prof.reqAboutCollection(workAndEducation)
+	jsons, err := prof.reqAboutCollection(aboutWorkAndEducation)
 	if err != nil {
 		return err
 	}

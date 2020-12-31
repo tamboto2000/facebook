@@ -26,7 +26,7 @@ type FamilyAndRelationships struct {
 
 // SyncFamilyAndRelationships retrieve family and relationships
 func (prof *Profile) SyncFamilyAndRelationships() error {
-	jsons, err := prof.reqAboutCollection(familyAndRelationships)
+	jsons, err := prof.reqAboutCollection(aboutFamilyAndRelationships)
 	if err != nil {
 		return err
 	}
