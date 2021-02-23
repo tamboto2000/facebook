@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/tamboto2000/jsonextract/v2"
+	"github.com/tamboto2000/jsonextract/v3"
 )
 
 // about Section's collections
@@ -31,37 +31,54 @@ type About struct {
 
 // SyncAbout fetch required tokens for requesting profile about data collections
 func (prof *Profile) SyncAbout() error {
-	rawBody, err := prof.fb.getRequest("/"+prof.ID+"/about", nil)
+	var handle string
+	if prof.Username != "" {
+		handle = prof.Username
+	} else {
+		handle = prof.ID
+	}
+
+	rawBody, err := prof.fb.getRequest("/"+handle+"/about", nil)
 	if err != nil {
 		return err
 	}
 
-	jsons, err := jsonextract.FromBytesWithOpt(rawBody, jsonextract.Option{
-		ParseObj:         true,
-		ParseArray:       true,
-		IgnoreEmptyObj:   true,
-		IgnoreEmptyArray: true,
-	})
+	jsons, err := jsonextract.FromBytes(rawBody)
 
 	if err != nil {
 		return err
 	}
+
+	// DELETE
+	// f, _ := os.Create("raw_about_" + handle + ".html")
+	// defer f.Close()
+	// f.Write(rawBody)
 
 	// find profile about section vars
 	if !findObj(jsons, func(json *jsonextract.JSON) bool {
-		val, ok := json.KeyVal["require"]
+		obj := json.Object()
+		val, ok := obj["require"]
 		if !ok {
 			return false
 		}
 
-		if findObj(val.Vals, func(json *jsonextract.JSON) bool {
-			val, ok := json.KeyVal["preloaderID"]
+		if val.Kind() != jsonextract.Array {
+			return false
+		}
+
+		if findObj(val.Array(), func(json *jsonextract.JSON) bool {
+			obj := json.Object()
+			val, ok := obj["preloaderID"]
 			if !ok {
 				return false
 			}
 
-			if strings.Contains(val.Val.(string), "adp_ProfileCometAboutAppSectionQueryRelayPreloader") {
-				if _, ok = json.KeyVal["variables"]; ok {
+			if val.Kind() != jsonextract.String {
+				return false
+			}
+
+			if strings.Contains(val.String(), "adp_ProfileCometAboutAppSectionQueryRelayPreloader") {
+				if _, ok = obj["variables"]; ok {
 					prof.aboutSectionVars = json
 					return true
 				}
@@ -84,13 +101,13 @@ func (prof *Profile) SyncAbout() error {
 
 func (prof *Profile) reqAboutCollection(c string) ([]*jsonextract.JSON, error) {
 	var section *jsonextract.JSON
-	for _, val := range prof.profileSections.KeyVal["edges"].Vals {
-		node, ok := val.KeyVal["node"]
+	for _, val := range prof.profileSections.Object()["edges"].Array() {
+		node, ok := val.Object()["node"]
 		if !ok {
 			continue
 		}
 
-		if val, ok := node.KeyVal["section_type"]; ok && val.Val.(string) == SectionAbout {
+		if val, ok := node.Object()["section_type"]; ok && val.String() == SectionAbout {
 			section = node
 			break
 		}
@@ -101,28 +118,25 @@ func (prof *Profile) reqAboutCollection(c string) ([]*jsonextract.JSON, error) {
 	}
 
 	var coll *jsonextract.JSON
-	for _, val := range section.KeyVal["all_collections"].KeyVal["nodes"].Vals {
-		tabKey, ok := val.KeyVal["tab_key"]
+	for _, val := range section.Object()["all_collections"].Object()["nodes"].Array() {
+		tabKey, ok := val.Object()["tab_key"]
 		if !ok {
 			continue
 		}
 
-		if tabKey.Val.(string) == c {
+		if tabKey.String() == c {
 			coll = val
 			break
 		}
 	}
 
-	vars := prof.aboutSectionVars.KeyVal["variables"]
-	vars.KeyVal["collectionToken"].Val = coll.KeyVal["id"].Val
-	if err := vars.ReParse(); err != nil {
-		return nil, err
-	}
+	vars := prof.aboutSectionVars.Object()["variables"]
+	vars.Object()["collectionToken"].SetStr(coll.Object()["id"].String())
 
 	reqBody := make(url.Values)
 	reqBody.Set("fb_api_req_friendly_name", "ProfileCometAboutAppSectionQuery")
-	reqBody.Set("variables", string(vars.Raw.Bytes()))
-	reqBody.Set("doc_id", prof.aboutSectionVars.KeyVal["queryID"].Val.(string))
+	reqBody.Set("variables", string(vars.Bytes()))
+	reqBody.Set("doc_id", prof.aboutSectionVars.Object()["queryID"].String())
 	rawBody, err := prof.fb.graphQlRequest(reqBody)
 	if err != nil {
 		return nil, err

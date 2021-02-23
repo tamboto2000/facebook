@@ -1,7 +1,7 @@
 package facebook
 
 import (
-	"github.com/tamboto2000/jsonextract/v2"
+	"github.com/tamboto2000/jsonextract/v3"
 )
 
 // Place contains profile's place info
@@ -23,8 +23,8 @@ func (prof *Profile) SyncPlacesLived() error {
 	// jsonextract.SaveToPath(jsons, "places_lived_bundle.json")
 
 	for _, json := range jsons {
-		if val, ok := json.KeyVal["label"]; ok {
-			if val.Val.(string) == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
+		if val, ok := json.Object()["label"]; ok {
+			if val.String() == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
 				prof.About.PlacesLived = extractPlaceLived(json)
 				break
 			}
@@ -36,32 +36,32 @@ func (prof *Profile) SyncPlacesLived() error {
 
 func extractPlaceLived(json *jsonextract.JSON) []Place {
 	places := make([]Place, 0)
-	if val, ok := json.KeyVal["data"]; ok {
-		if val, ok := val.KeyVal["activeCollections"]; ok {
-			if val, ok := val.KeyVal["nodes"]; ok {
-				for _, node := range val.Vals {
-					if val, ok := node.KeyVal["style_renderer"]; ok {
-						if val, ok := val.KeyVal["profile_field_sections"]; ok {
-							for _, section := range val.Vals {
-								if val, ok := section.KeyVal["profile_fields"]; ok {
-									if val, ok := val.KeyVal["nodes"]; ok {
-										for i, node := range val.Vals {
+	if val, ok := json.Object()["data"]; ok {
+		if val, ok := val.Object()["activeCollections"]; ok {
+			if val, ok := val.Object()["nodes"]; ok {
+				for _, node := range val.Array() {
+					if val, ok := node.Object()["style_renderer"]; ok {
+						if val, ok := val.Object()["profile_field_sections"]; ok {
+							for _, section := range val.Array() {
+								if val, ok := section.Object()["profile_fields"]; ok {
+									if val, ok := val.Object()["nodes"]; ok {
+										for i, node := range val.Array() {
 											if i == 0 {
 												continue
 											}
 
 											place := Place{
-												Name:    node.KeyVal["title"].KeyVal["text"].Val.(string),
-												PlaceIs: node.KeyVal["field_type"].Val.(string),
+												Name:    node.Object()["title"].Object()["text"].String(),
+												PlaceIs: node.Object()["field_type"].String(),
 											}
 
 											// extract place url
-											if val, ok := node.KeyVal["title"].KeyVal["ranges"]; ok {
-												if len(val.Vals) > 0 {
-													for _, rng := range val.Vals {
-														if val, ok := rng.KeyVal["entity"]; ok {
-															if val, ok := val.KeyVal["url"]; ok {
-																place.URL = val.Val.(string)
+											if val, ok := node.Object()["title"].Object()["ranges"]; ok {
+												if len(val.Array()) > 0 {
+													for _, rng := range val.Array() {
+														if val, ok := rng.Object()["entity"]; ok {
+															if val, ok := val.Object()["url"]; ok {
+																place.URL = val.String()
 															}
 														}
 													}
@@ -69,14 +69,14 @@ func extractPlaceLived(json *jsonextract.JSON) []Place {
 											}
 
 											// extract icon
-											if val, ok := node.KeyVal["renderer"]; ok {
-												if val, ok := val.KeyVal["field"]; ok {
-													if val, ok := val.KeyVal["icon"]; ok {
+											if val, ok := node.Object()["renderer"]; ok {
+												if val, ok := val.Object()["field"]; ok {
+													if val, ok := val.Object()["icon"]; ok {
 														place.Icon = &Photo{
-															Height: val.KeyVal["height"].Val.(int),
-															Scale:  float64(val.KeyVal["scale"].Val.(int)),
-															URI:    val.KeyVal["uri"].Val.(string),
-															Width:  val.KeyVal["width"].Val.(int),
+															Height: int(val.Object()["height"].Integer()),
+															Scale:  float64(val.Object()["scale"].Integer()),
+															URI:    val.Object()["uri"].String(),
+															Width:  int(val.Object()["width"].Integer()),
 														}
 													}
 												}

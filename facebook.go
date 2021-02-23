@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/tamboto2000/jsonextract/v2"
+	"github.com/tamboto2000/jsonextract/v3"
 )
 
 const (
@@ -81,39 +81,46 @@ RETRY:
 		return err
 	}
 
-	// DELETE
+	// // DELETE
 	// jsonextract.Save(jsons)
 
+	// // DELETE
+	// f, _ := os.Create("init.html")
+	// f.Write(body)
+	// f.Close()
+	// os.Exit(0)
+
 	if !findObj(jsons, func(json *jsonextract.JSON) bool {
-		val, ok := json.KeyVal["require"]
+		obj := json.Object()
+		val, ok := obj["require"]
 		if !ok {
 			return false
 		}
 
-		if findObj(val.Vals, func(json *jsonextract.JSON) bool {
-			val, ok := json.KeyVal["__bbox"]
+		if findObj(val.Array(), func(json *jsonextract.JSON) bool {
+			val, ok := json.Object()["__bbox"]
 			if !ok {
 				return false
 			}
 
-			val, ok = val.KeyVal["result"]
+			val, ok = val.Object()["result"]
 			if !ok {
 				return false
 			}
 
-			val, ok = val.KeyVal["data"]
+			val, ok = val.Object()["data"]
 			if !ok {
 				return false
 			}
 
-			val, ok = val.KeyVal["login_data"]
+			val, ok = val.Object()["login_data"]
 			if !ok {
 				return false
 			}
 
-			if val, ok := val.KeyVal["lsd"]; ok {
-				if val, ok := val.KeyVal["value"]; ok {
-					fb.FbDtsg = val.Val.(string)
+			if val, ok := val.Object()["lsd"]; ok {
+				if val, ok := val.Object()["value"]; ok {
+					fb.FbDtsg = val.String()
 				} else {
 					return false
 				}
@@ -121,9 +128,9 @@ RETRY:
 				return false
 			}
 
-			if val, ok := val.KeyVal["jazoest"]; ok {
-				if val, ok := val.KeyVal["value"]; ok {
-					fb.Jazoest = val.Val.(string)
+			if val, ok := val.Object()["jazoest"]; ok {
+				if val, ok := val.Object()["value"]; ok {
+					fb.Jazoest = val.String()
 				} else {
 					return false
 				}
@@ -148,14 +155,14 @@ RETRY:
 
 	// find site data
 	if !findObj(jsons, func(json *jsonextract.JSON) bool {
-		val, ok := json.KeyVal["define"]
+		val, ok := json.Object()["define"]
 		if !ok {
 			return false
 		}
 
-		if val.Kind == jsonextract.Array {
-			if findObj(val.Vals, func(json *jsonextract.JSON) bool {
-				if _, ok := json.KeyVal["__spin_r"]; ok {
+		if val.Kind() == jsonextract.Array {
+			if findObj(val.Array(), func(json *jsonextract.JSON) bool {
+				if _, ok := json.Object()["__spin_r"]; ok {
 					fb.SiteData = json
 					return true
 				}

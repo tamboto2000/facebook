@@ -1,6 +1,6 @@
 package facebook
 
-import "github.com/tamboto2000/jsonextract/v2"
+import "github.com/tamboto2000/jsonextract/v3"
 
 // NamePronunciation contains name pronunciation, include text and audio file URI
 type NamePronunciation struct {
@@ -33,12 +33,12 @@ func (prof *Profile) SyncDetails() error {
 	// jsonextract.SaveToPath(jsons, "raw_details.json")
 
 	for _, json := range jsons {
-		val, ok := json.KeyVal["label"]
+		val, ok := json.Object()["label"]
 		if !ok {
 			continue
 		}
 
-		if val.Val.(string) == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
+		if val.String() == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
 			details := extractDetails(json)
 			prof.About.Details = details
 
@@ -51,28 +51,28 @@ func (prof *Profile) SyncDetails() error {
 
 func extractDetails(json *jsonextract.JSON) *Details {
 	details := new(Details)
-	if val, ok := json.KeyVal["data"]; ok {
-		if val, ok := val.KeyVal["activeCollections"]; ok {
-			if val, ok := val.KeyVal["nodes"]; ok {
-				for _, node := range val.Vals {
-					if val, ok := node.KeyVal["style_renderer"]; ok {
-						if val, ok := val.KeyVal["profile_field_sections"]; ok {
-							for _, section := range val.Vals {
-								val, ok := section.KeyVal["field_section_type"]
+	if val, ok := json.Object()["data"]; ok {
+		if val, ok := val.Object()["activeCollections"]; ok {
+			if val, ok := val.Object()["nodes"]; ok {
+				for _, node := range val.Array() {
+					if val, ok := node.Object()["style_renderer"]; ok {
+						if val, ok := val.Object()["profile_field_sections"]; ok {
+							for _, section := range val.Array() {
+								val, ok := section.Object()["field_section_type"]
 								if !ok {
 									continue
 								}
 
 								// extract about
-								if val.Val.(string) == "about_me" {
-									if val, ok := section.KeyVal["profile_fields"]; ok {
-										if val, ok := val.KeyVal["nodes"]; ok {
-											for _, node := range val.Vals {
-												if val, ok := node.KeyVal["renderer"]; ok {
-													if val, ok := val.KeyVal["field"]; ok {
-														if val, ok := val.KeyVal["text_content"]; ok {
-															if val, ok := val.KeyVal["text"]; ok {
-																details.About = val.Val.(string)
+								if val.String() == "about_me" {
+									if val, ok := section.Object()["profile_fields"]; ok {
+										if val, ok := val.Object()["nodes"]; ok {
+											for _, node := range val.Array() {
+												if val, ok := node.Object()["renderer"]; ok {
+													if val, ok := val.Object()["field"]; ok {
+														if val, ok := val.Object()["text_content"]; ok {
+															if val, ok := val.Object()["text"]; ok {
+																details.About = val.String()
 															}
 														}
 													}
@@ -83,19 +83,19 @@ func extractDetails(json *jsonextract.JSON) *Details {
 								}
 
 								// extract name pronunciation
-								if val.Val.(string) == "name_pronunciation" {
-									if val, ok := section.KeyVal["profile_fields"]; ok {
-										if val, ok := val.KeyVal["nodes"]; ok {
-											for _, node := range val.Vals {
-												if val, ok := node.KeyVal["renderer"]; ok {
+								if val.String() == "name_pronunciation" {
+									if val, ok := section.Object()["profile_fields"]; ok {
+										if val, ok := val.Object()["nodes"]; ok {
+											for _, node := range val.Array() {
+												if val, ok := node.Object()["renderer"]; ok {
 													pronun := new(NamePronunciation)
-													if val, ok := val.KeyVal["audio_uri"]; ok {
-														pronun.AudioURI = val.Val.(string)
+													if val, ok := val.Object()["audio_uri"]; ok {
+														pronun.AudioURI = val.String()
 													}
 
-													if val, ok := val.KeyVal["text_content"]; ok {
-														if val, ok := val.KeyVal["text"]; ok {
-															pronun.Text = val.Val.(string)
+													if val, ok := val.Object()["text_content"]; ok {
+														if val, ok := val.Object()["text"]; ok {
+															pronun.Text = val.String()
 														}
 													}
 
@@ -107,25 +107,25 @@ func extractDetails(json *jsonextract.JSON) *Details {
 								}
 
 								// extract nicknames
-								if val.Val.(string) == "nicknames" {
-									if val, ok := section.KeyVal["profile_fields"]; ok {
-										if val, ok := val.KeyVal["nodes"]; ok {
-											for i, node := range val.Vals {
+								if val.String() == "nicknames" {
+									if val, ok := section.Object()["profile_fields"]; ok {
+										if val, ok := val.Object()["nodes"]; ok {
+											for i, node := range val.Array() {
 												if i == 0 {
 													continue
 												}
 
 												nickname := Nickname{
-													Name: node.KeyVal["title"].KeyVal["text"].Val.(string),
+													Name: node.Object()["title"].Object()["text"].String(),
 												}
 
-												if val, ok := node.KeyVal["list_item_groups"]; ok {
-													for _, group := range val.Vals {
-														if val, ok := group.KeyVal["list_items"]; ok {
-															for _, item := range val.Vals {
-																if val, ok := item.KeyVal["text"]; ok {
-																	if val, ok := val.KeyVal["text"]; ok {
-																		nickname.Type = val.Val.(string)
+												if val, ok := node.Object()["list_item_groups"]; ok {
+													for _, group := range val.Array() {
+														if val, ok := group.Object()["list_items"]; ok {
+															for _, item := range val.Array() {
+																if val, ok := item.Object()["text"]; ok {
+																	if val, ok := val.Object()["text"]; ok {
+																		nickname.Type = val.String()
 																	}
 																}
 															}
@@ -140,15 +140,15 @@ func extractDetails(json *jsonextract.JSON) *Details {
 								}
 
 								// extract quotes
-								if val.Val.(string) == "favorite_quotes" {
-									if val, ok := section.KeyVal["profile_fields"]; ok {
-										if val, ok := val.KeyVal["nodes"]; ok {
-											for _, node := range val.Vals {
-												if val, ok := node.KeyVal["renderer"]; ok {
-													if val, ok := val.KeyVal["field"]; ok {
-														if val, ok := val.KeyVal["text_content"]; ok {
-															if val, ok := val.KeyVal["text"]; ok {
-																details.FavoriteQuotes = val.Val.(string)
+								if val.String() == "favorite_quotes" {
+									if val, ok := section.Object()["profile_fields"]; ok {
+										if val, ok := val.Object()["nodes"]; ok {
+											for _, node := range val.Array() {
+												if val, ok := node.Object()["renderer"]; ok {
+													if val, ok := val.Object()["field"]; ok {
+														if val, ok := val.Object()["text_content"]; ok {
+															if val, ok := val.Object()["text"]; ok {
+																details.FavoriteQuotes = val.String()
 															}
 														}
 													}

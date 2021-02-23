@@ -3,7 +3,7 @@ package facebook
 import (
 	"strings"
 
-	"github.com/tamboto2000/jsonextract/v2"
+	"github.com/tamboto2000/jsonextract/v3"
 )
 
 // ContactAndBasicInfo contains profile's contact detail and basic info
@@ -43,12 +43,12 @@ func (prof *Profile) SyncContactAndBasicInfo() error {
 	// jsonextract.SaveToPath(jsons, "raw_contact_basic_info.json")
 
 	for _, json := range jsons {
-		val, ok := json.KeyVal["label"]
+		val, ok := json.Object()["label"]
 		if !ok {
 			continue
 		}
 
-		if val.Val.(string) == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
+		if val.String() == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
 			prof.About.ContactAndBasicInfo = extractContactBasicInfo(json)
 			break
 		}
@@ -59,43 +59,43 @@ func (prof *Profile) SyncContactAndBasicInfo() error {
 
 func extractContactBasicInfo(json *jsonextract.JSON) *ContactAndBasicInfo {
 	contactBasic := new(ContactAndBasicInfo)
-	if val, ok := json.KeyVal["data"]; ok {
-		if val, ok := val.KeyVal["activeCollections"]; ok {
-			if val, ok := val.KeyVal["nodes"]; ok {
-				for _, node := range val.Vals {
-					if val, ok := node.KeyVal["style_renderer"]; ok {
-						if val, ok := val.KeyVal["profile_field_sections"]; ok {
-							for _, section := range val.Vals {
-								val, ok := section.KeyVal["field_section_type"]
+	if val, ok := json.Object()["data"]; ok {
+		if val, ok := val.Object()["activeCollections"]; ok {
+			if val, ok := val.Object()["nodes"]; ok {
+				for _, node := range val.Array() {
+					if val, ok := node.Object()["style_renderer"]; ok {
+						if val, ok := val.Object()["profile_field_sections"]; ok {
+							for _, section := range val.Array() {
+								val, ok := section.Object()["field_section_type"]
 								if !ok {
 									continue
 								}
 
 								// extract phone number and address
-								if val.Val.(string) == "about_contact_info" {
-									if val, ok := section.KeyVal["profile_fields"]; ok {
-										if val, ok := val.KeyVal["nodes"]; ok {
-											for _, node := range val.Vals {
-												val, ok := node.KeyVal["field_type"]
+								if val.String() == "about_contact_info" {
+									if val, ok := section.Object()["profile_fields"]; ok {
+										if val, ok := val.Object()["nodes"]; ok {
+											for _, node := range val.Array() {
+												val, ok := node.Object()["field_type"]
 												if !ok {
 													continue
 												}
 
 												// extract phone
-												if val.Val.(string) == "other_phone" {
-													if val, ok := node.KeyVal["title"]; ok {
-														if val, ok := val.KeyVal["text"]; ok {
-															contactBasic.Phone = val.Val.(string)
+												if val.String() == "other_phone" {
+													if val, ok := node.Object()["title"]; ok {
+														if val, ok := val.Object()["text"]; ok {
+															contactBasic.Phone = val.String()
 														}
 													}
 												}
 
 												// extract address
-												if val.Val.(string) == "address" {
-													if val.Val.(string) == "other_phone" {
-														if val, ok := node.KeyVal["title"]; ok {
-															if val, ok := val.KeyVal["text"]; ok {
-																contactBasic.Address = val.Val.(string)
+												if val.String() == "address" {
+													if val.String() == "other_phone" {
+														if val, ok := node.Object()["title"]; ok {
+															if val, ok := val.Object()["text"]; ok {
+																contactBasic.Address = val.String()
 															}
 														}
 													}
@@ -106,40 +106,40 @@ func extractContactBasicInfo(json *jsonextract.JSON) *ContactAndBasicInfo {
 								}
 
 								// extract websites and social links
-								if val.Val.(string) == "websites_and_social_links" {
-									if val, ok := section.KeyVal["profile_fields"]; ok {
-										if val, ok := val.KeyVal["nodes"]; ok {
-											for _, node := range val.Vals {
-												val, ok := node.KeyVal["field_type"]
+								if val.String() == "websites_and_social_links" {
+									if val, ok := section.Object()["profile_fields"]; ok {
+										if val, ok := val.Object()["nodes"]; ok {
+											for _, node := range val.Array() {
+												val, ok := node.Object()["field_type"]
 												if !ok {
 													continue
 												}
 
 												// extract website
-												if val.Val.(string) == "website" {
-													if val, ok := node.KeyVal["title"]; ok {
-														if val, ok := val.KeyVal["text"]; ok {
-															contactBasic.Websites = append(contactBasic.Websites, val.Val.(string))
+												if val.String() == "website" {
+													if val, ok := node.Object()["title"]; ok {
+														if val, ok := val.Object()["text"]; ok {
+															contactBasic.Websites = append(contactBasic.Websites, val.String())
 														}
 													}
 												}
 
 												// extract social link
-												if val.Val.(string) == "screenname" {
+												if val.String() == "screenname" {
 													socialLink := SocialLink{}
-													if val, ok := node.KeyVal["title"]; ok {
-														if val, ok := val.KeyVal["text"]; ok {
-															socialLink.URLOrScreenname = val.Val.(string)
+													if val, ok := node.Object()["title"]; ok {
+														if val, ok := val.Object()["text"]; ok {
+															socialLink.URLOrScreenname = val.String()
 														}
 													}
 
 													// extract social media name
-													if val, ok := node.KeyVal["list_item_groups"]; ok {
-														for _, group := range val.Vals {
-															if val, ok := group.KeyVal["list_items"]; ok {
-																for _, item := range val.Vals {
-																	if val, ok := item.KeyVal["text"]; ok {
-																		socialLink.Type = val.KeyVal["text"].Val.(string)
+													if val, ok := node.Object()["list_item_groups"]; ok {
+														for _, group := range val.Array() {
+															if val, ok := group.Object()["list_items"]; ok {
+																for _, item := range val.Array() {
+																	if val, ok := item.Object()["text"]; ok {
+																		socialLink.Type = val.Object()["text"].String()
 																	}
 																}
 															}
@@ -154,70 +154,70 @@ func extractContactBasicInfo(json *jsonextract.JSON) *ContactAndBasicInfo {
 								}
 
 								// extract basic infos
-								if val.Val.(string) == "basic_info" {
+								if val.String() == "basic_info" {
 									contactBasic.BasicInfo = new(BasicInfo)
-									if val, ok := section.KeyVal["profile_fields"]; ok {
-										if val, ok := val.KeyVal["nodes"]; ok {
-											for _, node := range val.Vals {
-												val, ok := node.KeyVal["field_type"]
+									if val, ok := section.Object()["profile_fields"]; ok {
+										if val, ok := val.Object()["nodes"]; ok {
+											for _, node := range val.Array() {
+												val, ok := node.Object()["field_type"]
 												if !ok {
 													continue
 												}
 
 												// extract gender
-												if val.Val.(string) == "gender" {
-													if val, ok := node.KeyVal["title"]; ok {
-														if val, ok := val.KeyVal["text"]; ok {
-															contactBasic.BasicInfo.Gender = strings.ToUpper(val.Val.(string))
+												if val.String() == "gender" {
+													if val, ok := node.Object()["title"]; ok {
+														if val, ok := val.Object()["text"]; ok {
+															contactBasic.BasicInfo.Gender = strings.ToUpper(val.String())
 														}
 													}
 												}
 
 												// extract birthday
-												if val.Val.(string) == "birthday" {
-													if val, ok := node.KeyVal["title"]; ok {
-														if val, ok := val.KeyVal["text"]; ok {
+												if val.String() == "birthday" {
+													if val, ok := node.Object()["title"]; ok {
+														if val, ok := val.Object()["text"]; ok {
 															if contactBasic.BasicInfo.Birthday != "" {
 																contactBasic.BasicInfo.Birthday += ", "
 															}
 
-															contactBasic.BasicInfo.Birthday += val.Val.(string)
+															contactBasic.BasicInfo.Birthday += val.String()
 														}
 													}
 												}
 
 												// extract languages
-												if val.Val.(string) == "languages" {
-													if val, ok := node.KeyVal["title"]; ok {
-														if val, ok := val.KeyVal["text"]; ok {
-															contactBasic.BasicInfo.Languages = val.Val.(string)
+												if val.String() == "languages" {
+													if val, ok := node.Object()["title"]; ok {
+														if val, ok := val.Object()["text"]; ok {
+															contactBasic.BasicInfo.Languages = val.String()
 														}
 													}
 												}
 
 												// extract relion views
-												if val.Val.(string) == "religion" {
-													if val, ok := node.KeyVal["title"]; ok {
-														if val, ok := val.KeyVal["text"]; ok {
-															contactBasic.BasicInfo.ReligiousViews = val.Val.(string)
+												if val.String() == "religion" {
+													if val, ok := node.Object()["title"]; ok {
+														if val, ok := val.Object()["text"]; ok {
+															contactBasic.BasicInfo.ReligiousViews = val.String()
 														}
 													}
 												}
 
 												// extract political views
-												if val.Val.(string) == "politics" {
-													if val, ok := node.KeyVal["title"]; ok {
-														if val, ok := val.KeyVal["text"]; ok {
-															contactBasic.BasicInfo.PoliticalViews = val.Val.(string)
+												if val.String() == "politics" {
+													if val, ok := node.Object()["title"]; ok {
+														if val, ok := val.Object()["text"]; ok {
+															contactBasic.BasicInfo.PoliticalViews = val.String()
 														}
 													}
 												}
 
 												// extract interested in
-												if val.Val.(string) == "interested_in" {
-													if val, ok := node.KeyVal["title"]; ok {
-														if val, ok := val.KeyVal["text"]; ok {
-															contactBasic.BasicInfo.InterestedIn = strings.ToUpper(val.Val.(string))
+												if val.String() == "interested_in" {
+													if val, ok := node.Object()["title"]; ok {
+														if val, ok := val.Object()["text"]; ok {
+															contactBasic.BasicInfo.InterestedIn = strings.ToUpper(val.String())
 														}
 													}
 												}

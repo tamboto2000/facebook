@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/araddon/dateparse"
-	"github.com/tamboto2000/jsonextract/v2"
+	"github.com/tamboto2000/jsonextract/v3"
 )
 
 // Work contains Profile's work/occupation information
@@ -54,12 +54,12 @@ func (prof *Profile) SyncWorkAndEducation() error {
 	// jsonextract.SaveToPath(jsons, "work_education_bundle.json")
 
 	for _, json := range jsons {
-		val, ok := json.KeyVal["label"]
+		val, ok := json.Object()["label"]
 		if !ok {
 			continue
 		}
 
-		if val.Val.(string) == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
+		if val.String() == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
 			works, educations := extractWorks(json)
 			prof.About.WorkHistory = works
 			prof.About.EducationHistory = educations
@@ -73,51 +73,51 @@ func (prof *Profile) SyncWorkAndEducation() error {
 func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 	works := make([]Work, 0)
 	educations := make([]Education, 0)
-	val, ok := json.KeyVal["data"]
+	val, ok := json.Object()["data"]
 	if !ok {
 		return nil, nil
 	}
 
-	val, ok = val.KeyVal["activeCollections"]
+	val, ok = val.Object()["activeCollections"]
 	if !ok {
 		return nil, nil
 	}
 
-	val, ok = val.KeyVal["nodes"]
+	val, ok = val.Object()["nodes"]
 	if !ok {
 		return nil, nil
 	}
 
-	for _, node := range val.Vals {
-		val, ok := node.KeyVal["style_renderer"]
+	for _, node := range val.Array() {
+		val, ok := node.Object()["style_renderer"]
 		if !ok {
 			continue
 		}
 
-		val, ok = val.KeyVal["profile_field_sections"]
+		val, ok = val.Object()["profile_field_sections"]
 		if !ok {
 			continue
 		}
 
-		for _, section := range val.Vals {
-			val, ok := section.KeyVal["field_section_type"]
+		for _, section := range val.Array() {
+			val, ok := section.Object()["field_section_type"]
 			if !ok {
 				continue
 			}
 
-			if val.Val.(string) == "work" {
+			if val.String() == "work" {
 				// start parsing work history
-				val, ok := section.KeyVal["profile_fields"]
+				val, ok := section.Object()["profile_fields"]
 				if !ok {
 					return nil, nil
 				}
 
-				val, ok = val.KeyVal["nodes"]
+				val, ok = val.Object()["nodes"]
 				if !ok {
 					return nil, nil
 				}
 
-				for i, node := range val.Vals {
+				for i, node := range val.Array() {
 					// skip the first index because the first index is a button for add new work history
 					if i == 0 {
 						continue
@@ -125,63 +125,63 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 
 					// create Work and assign Title
 					work := Work{
-						Title: node.KeyVal["title"].KeyVal["text"].Val.(string),
+						Title: node.Object()["title"].Object()["text"].String(),
 					}
 
 					// find company url
-					if val, ok := node.KeyVal["title"].KeyVal["ranges"]; ok {
-						for _, rng := range val.Vals {
-							val, ok := rng.KeyVal["entity"]
+					if val, ok := node.Object()["title"].Object()["ranges"]; ok {
+						for _, rng := range val.Array() {
+							val, ok := rng.Object()["entity"]
 							if !ok {
 								continue
 							}
 
-							val, ok = rng.KeyVal["url"]
+							val, ok = rng.Object()["url"]
 							if !ok {
 								continue
 							}
 
-							work.CompanyURL = val.Val.(string)
+							work.CompanyURL = val.String()
 						}
 					}
 
 					// find company icon
-					if val, ok := node.KeyVal["renderer"]; ok {
-						if val, ok := val.KeyVal["field"]; ok {
-							if val, ok := val.KeyVal["icon"]; ok {
+					if val, ok := node.Object()["renderer"]; ok {
+						if val, ok := val.Object()["field"]; ok {
+							if val, ok := val.Object()["icon"]; ok {
 								work.CompanyIcon = &Photo{
-									Height: val.KeyVal["height"].Val.(int),
-									Scale:  val.KeyVal["scale"].Val.(float64),
-									URI:    val.KeyVal["uri"].Val.(string),
-									Width:  val.KeyVal["width"].Val.(int),
+									Height: int(val.Object()["height"].Integer()),
+									Scale:  val.Object()["scale"].Float(),
+									URI:    val.Object()["uri"].String(),
+									Width:  int(val.Object()["width"].Integer()),
 								}
 							}
 						}
 					}
 
 					// find description
-					if val, ok := node.KeyVal["list_item_groups"]; ok {
-						for _, itemGroup := range val.Vals {
-							if val, ok := itemGroup.KeyVal["list_items"]; ok {
-								for _, item := range val.Vals {
-									val, ok := item.KeyVal["heading_type"]
+					if val, ok := node.Object()["list_item_groups"]; ok {
+						for _, itemGroup := range val.Array() {
+							if val, ok := itemGroup.Object()["list_items"]; ok {
+								for _, item := range val.Array() {
+									val, ok := item.Object()["heading_type"]
 									if !ok {
 										continue
 									}
 
 									// description
-									if val.Val.(string) == "MEDIUM" {
-										if val, ok := item.KeyVal["text"]; ok {
-											work.Description = val.KeyVal["text"].Val.(string)
+									if val.String() == "MEDIUM" {
+										if val, ok := item.Object()["text"]; ok {
+											work.Description = val.Object()["text"].String()
 										}
 									}
 
 									// can be date range or location
-									if val.Val.(string) == "LOW" {
-										if val, ok := item.KeyVal["text"]; ok {
+									if val.String() == "LOW" {
+										if val, ok := item.Object()["text"]; ok {
 											// if strings contains " - ", this must be date range, otherwise a location
-											if strings.Contains(val.KeyVal["text"].Val.(string), " - ") {
-												split := strings.Split(val.KeyVal["text"].Val.(string), " - ")
+											if strings.Contains(val.Object()["text"].String(), " - ") {
+												split := strings.Split(val.Object()["text"].String(), " - ")
 												if len(split) > 1 {
 													date1, err := dateparse.ParseAny(split[0])
 													if err == nil {
@@ -197,7 +197,7 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 												}
 
 											} else {
-												work.Location = val.KeyVal["text"].Val.(string)
+												work.Location = val.Object()["text"].String()
 											}
 										}
 									}
@@ -210,59 +210,59 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 				}
 			}
 
-			if val.Val.(string) == "college" {
-				if val, ok := section.KeyVal["profile_fields"]; ok {
-					if val, ok := val.KeyVal["nodes"]; ok {
-						for i, node := range val.Vals {
+			if val.String() == "college" {
+				if val, ok := section.Object()["profile_fields"]; ok {
+					if val, ok := val.Object()["nodes"]; ok {
+						for i, node := range val.Array() {
 							if i == 0 {
 								continue
 							}
 
 							education := Education{
-								Title: node.KeyVal["title"].KeyVal["text"].Val.(string),
+								Title: node.Object()["title"].Object()["text"].String(),
 								Type:  "college",
 							}
 
 							// find school url
-							if val, ok := node.KeyVal["title"].KeyVal["ranges"]; ok {
-								for _, rng := range val.Vals {
-									if val, ok := rng.KeyVal["entity"]; ok {
-										if val, ok := val.KeyVal["url"]; ok {
-											education.SchoolURL = val.Val.(string)
+							if val, ok := node.Object()["title"].Object()["ranges"]; ok {
+								for _, rng := range val.Array() {
+									if val, ok := rng.Object()["entity"]; ok {
+										if val, ok := val.Object()["url"]; ok {
+											education.SchoolURL = val.String()
 										}
 									}
 								}
 							}
 
 							// find school icon
-							if val, ok := node.KeyVal["renderer"]; ok {
-								if val, ok := val.KeyVal["field"]; ok {
-									if val, ok := val.KeyVal["icon"]; ok {
+							if val, ok := node.Object()["renderer"]; ok {
+								if val, ok := val.Object()["field"]; ok {
+									if val, ok := val.Object()["icon"]; ok {
 										education.SchoolIcon = &Photo{
-											Height: val.KeyVal["height"].Val.(int),
-											Scale:  float64(val.KeyVal["scale"].Val.(int)),
-											URI:    val.KeyVal["uri"].Val.(string),
-											Width:  val.KeyVal["width"].Val.(int),
+											Height: int(val.Object()["height"].Integer()),
+											Scale:  float64(val.Object()["scale"].Integer()),
+											URI:    val.Object()["uri"].String(),
+											Width:  int(val.Object()["width"].Integer()),
 										}
 									}
 								}
 							}
 
 							// find date range, degree, concentrations, and description
-							if val, ok := node.KeyVal["list_item_groups"]; ok {
-								for _, val := range val.Vals {
-									if val, ok := val.KeyVal["list_items"]; ok {
-										for _, val := range val.Vals {
-											heading, ok := val.KeyVal["heading_type"]
+							if val, ok := node.Object()["list_item_groups"]; ok {
+								for _, val := range val.Array() {
+									if val, ok := val.Object()["list_items"]; ok {
+										for _, val := range val.Array() {
+											heading, ok := val.Object()["heading_type"]
 											if !ok {
 												continue
 											}
 
-											headStr := heading.Val.(string)
+											headStr := heading.String()
 
 											// extract date range
 											if headStr == "LOW" {
-												split := strings.Split(val.KeyVal["text"].KeyVal["text"].Val.(string), " - ")
+												split := strings.Split(val.Object()["text"].Object()["text"].String(), " - ")
 												if len(split) > 1 {
 													date1, err := dateparse.ParseAny(split[0])
 													if err == nil {
@@ -280,7 +280,7 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 
 											// extract other info, like degree, concentrations, and description
 											if headStr == "MEDIUM" {
-												education.OtherInfo = append(education.OtherInfo, val.KeyVal["text"].KeyVal["text"].Val.(string))
+												education.OtherInfo = append(education.OtherInfo, val.Object()["text"].Object()["text"].String())
 											}
 										}
 									}
@@ -293,64 +293,64 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 				}
 			}
 
-			if val.Val.(string) == "secondary_school" {
-				if val, ok := section.KeyVal["profile_fields"]; ok {
-					if val, ok := val.KeyVal["nodes"]; ok {
-						for i, node := range val.Vals {
+			if val.String() == "secondary_school" {
+				if val, ok := section.Object()["profile_fields"]; ok {
+					if val, ok := val.Object()["nodes"]; ok {
+						for i, node := range val.Array() {
 							if i == 0 {
 								continue
 							}
 
 							education := Education{
-								Title: node.KeyVal["title"].KeyVal["text"].Val.(string),
+								Title: node.Object()["title"].Object()["text"].String(),
 								Type:  "high_school",
 							}
 
 							// find school url
-							if val, ok := node.KeyVal["title"].KeyVal["ranges"]; ok {
-								for _, rng := range val.Vals {
-									if val, ok := rng.KeyVal["entity"]; ok {
-										if val, ok := val.KeyVal["url"]; ok {
-											education.SchoolURL = val.Val.(string)
+							if val, ok := node.Object()["title"].Object()["ranges"]; ok {
+								for _, rng := range val.Array() {
+									if val, ok := rng.Object()["entity"]; ok {
+										if val, ok := val.Object()["url"]; ok {
+											education.SchoolURL = val.String()
 										}
 									}
 								}
 							}
 
 							// find school icon
-							if val, ok := node.KeyVal["renderer"]; ok {
-								if val, ok := val.KeyVal["field"]; ok {
-									if val, ok := val.KeyVal["icon"]; ok {
+							if val, ok := node.Object()["renderer"]; ok {
+								if val, ok := val.Object()["field"]; ok {
+									if val, ok := val.Object()["icon"]; ok {
 										education.SchoolIcon = &Photo{
-											Height: val.KeyVal["height"].Val.(int),
-											Scale:  float64(val.KeyVal["scale"].Val.(int)),
-											URI:    val.KeyVal["uri"].Val.(string),
-											Width:  val.KeyVal["width"].Val.(int),
+											Height: int(val.Object()["height"].Integer()),
+											Scale:  float64(val.Object()["scale"].Integer()),
+											URI:    val.Object()["uri"].String(),
+											Width:  int(val.Object()["width"].Integer()),
 										}
 									}
 								}
 							}
 
 							// find date range, degree, concentrations, and description
-							if val, ok := node.KeyVal["list_item_groups"]; ok {
-								for _, val := range val.Vals {
-									if val, ok := val.KeyVal["list_items"]; ok {
-										for _, val := range val.Vals {
-											heading, ok := val.KeyVal["heading_type"]
+							if val, ok := node.Object()["list_item_groups"]; ok {
+								for _, val := range val.Array() {
+									if val, ok := val.Object()["list_items"]; ok {
+										for _, val := range val.Array() {
+											heading, ok := val.Object()["heading_type"]
 											if !ok {
 												continue
 											}
 
-											headStr := heading.Val.(string)
+											headStr := heading.String()
 
 											// extract date range
 											if headStr == "LOW" {
-												education.ClassOf = val.KeyVal["text"].KeyVal["text"].Val.(string)
+												education.ClassOf = val.Object()["text"].Object()["text"].String()
 											}
 
 											// extract other info, like degree, concentrations, and description
 											if headStr == "MEDIUM" {
-												education.Description = val.KeyVal["text"].KeyVal["text"].Val.(string)
+												education.Description = val.Object()["text"].Object()["text"].String()
 											}
 										}
 									}

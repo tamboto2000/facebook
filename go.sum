@@ -9,8 +9,10 @@ github.com/scylladb/termtables v0.0.0-20191203121021-c4c0b6d42ff4/go.mod h1:C1a7
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.6.1 h1:hDPOHmpOpP40lSULcqw7IrRb/u7w6RpDC9399XyoNd0=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/tamboto2000/jsonextract/v2 v2.2.0 h1:Fbq/loJ5EFMtkkAGwIh9UO+LU194c9k+AN2CPvwPm9E=
-github.com/tamboto2000/jsonextract/v2 v2.2.0/go.mod h1:XBnFkvigA4cfe0dPxV7CHZogmo+yxaKm58VBdcLRPG4=
+github.com/tamboto2000/jsonextract/v3 v3.1.0 h1:VCEHx2MOQ3i3R8JCnrNuasdlkZ5D3t7gTSMc4UmdHBo=
+github.com/tamboto2000/jsonextract/v3 v3.1.0/go.mod h1:2BP3mTBATolKhglg7xxwciIiN79pdap4KYD2C4xnPKM=
+github.com/tamboto2000/jsonextract/v3 v3.1.1 h1:R8ddjn+mkb+Q8a6AYpJl2CjSjUAgQ6uAJ73Y3L9loZQ=
+github.com/tamboto2000/jsonextract/v3 v3.1.1/go.mod h1:2BP3mTBATolKhglg7xxwciIiN79pdap4KYD2C4xnPKM=
 github.com/tamboto2000/random v1.0.0 h1:iODDJlcl7Ejl3d/5Y8gde4YPiqrvg3sYnhGV8crxgoU=
 github.com/tamboto2000/random v1.0.0/go.mod h1:PGjYFpO1SGvCH8UJ7yAcLOROSspEmjT0nZwArCfNnio=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
