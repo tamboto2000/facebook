@@ -2,6 +2,7 @@ package facebook
 
 import (
 	"errors"
+	"os"
 
 	"github.com/tamboto2000/jsonextract/v3"
 )
@@ -30,9 +31,13 @@ type Profile struct {
 
 // Profile retrieve profile
 func (fb *Facebook) Profile(user string) (*Profile, error) {
-	body, err := fb.getRequest("/"+user, nil)
+	resp, body, err := fb.getRequest("/"+user, nil)
 	if err != nil {
 		return nil, err
+	}
+
+	if resp.StatusCode == 404 {
+		return nil, ErrUserNotFound
 	}
 
 	// DELETE
@@ -44,6 +49,11 @@ func (fb *Facebook) Profile(user string) (*Profile, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// DELETE
+	f, _ := os.Create(user + ".html")
+	f.Write(body)
+	f.Close()
 
 	prof := &Profile{fb: fb}
 	if !composeProfile(jsons, prof) {

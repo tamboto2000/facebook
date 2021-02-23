@@ -38,7 +38,7 @@ func (prof *Profile) SyncAbout() error {
 		handle = prof.ID
 	}
 
-	rawBody, err := prof.fb.getRequest("/"+handle+"/about", nil)
+	_, rawBody, err := prof.fb.getRequest("/"+handle+"/about", nil)
 	if err != nil {
 		return err
 	}

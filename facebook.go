@@ -71,7 +71,7 @@ RETRY:
 
 	userID := cUser.(*http.Cookie).Value
 
-	body, err := fb.getRequest("/"+userID, nil)
+	_, body, err := fb.getRequest("/"+userID, nil)
 	if err != nil {
 		return err
 	}
@@ -280,7 +280,7 @@ func (fb *Facebook) mergeCookie(newC []*http.Cookie) {
 	}
 }
 
-func (fb *Facebook) getRequest(path string, query url.Values) ([]byte, error) {
+func (fb *Facebook) getRequest(path string, query url.Values) (*http.Response, []byte, error) {
 	header := http.Header{
 		"User-Agent":                {userAgent},
 		"Accept":                    {"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"},
@@ -292,7 +292,7 @@ func (fb *Facebook) getRequest(path string, query url.Values) ([]byte, error) {
 
 	urlParsed, err := url.Parse(fb.host + path)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if query != nil {
@@ -301,7 +301,7 @@ func (fb *Facebook) getRequest(path string, query url.Values) ([]byte, error) {
 
 	req, err := http.NewRequest("GET", urlParsed.String(), nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	req.Header = header
@@ -312,19 +312,19 @@ func (fb *Facebook) getRequest(path string, query url.Values) ([]byte, error) {
 
 	resp, err := fb.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	defer resp.Body.Close()
 
 	buff, err := decompressResponseBody(resp)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	fb.mergeCookie(resp.Cookies())
 
-	return buff.Bytes(), nil
+	return resp, buff.Bytes(), nil
 }
 
 func (fb *Facebook) graphQlRequest(body url.Values) ([]byte, error) {

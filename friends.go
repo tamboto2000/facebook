@@ -18,7 +18,7 @@ type Friends struct {
 
 // SyncFriends retrieve importants tokens to retrieve friend list
 func (prof *Profile) SyncFriends() error {
-	rawBody, err := prof.fb.getRequest("/"+prof.ID+"/friends", nil)
+	_, rawBody, err := prof.fb.getRequest("/"+prof.ID+"/friends", nil)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (prof *Profile) SyncFriends() error {
 
 // AllFriends prepare for paging all friends list
 func (prof *Profile) AllFriends() (*Friends, error) {
-	rawBody, err := prof.fb.getRequest("/"+prof.ID+"/friends_all", nil)
+	_, rawBody, err := prof.fb.getRequest("/"+prof.ID+"/friends_all", nil)
 	if err != nil {
 		return nil, err
 	}
