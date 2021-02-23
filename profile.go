@@ -2,7 +2,6 @@ package facebook
 
 import (
 	"errors"
-	"os"
 
 	"github.com/tamboto2000/jsonextract/v3"
 )
@@ -51,9 +50,9 @@ func (fb *Facebook) Profile(user string) (*Profile, error) {
 	}
 
 	// DELETE
-	f, _ := os.Create(user + ".html")
-	f.Write(body)
-	f.Close()
+	// f, _ := os.Create(user + ".html")
+	// f.Write(body)
+	// f.Close()
 
 	prof := &Profile{fb: fb}
 	if !composeProfile(jsons, prof) {
