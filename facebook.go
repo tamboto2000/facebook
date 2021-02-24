@@ -363,5 +363,7 @@ func (fb *Facebook) graphQlRequest(body url.Values) ([]byte, error) {
 		return nil, err
 	}
 
+	fb.mergeCookie(resp.Cookies())
+
 	return buff.Bytes(), nil
 }
