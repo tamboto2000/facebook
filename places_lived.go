@@ -74,9 +74,15 @@ func extractPlaceLived(json *jsonextract.JSON) []Place {
 													if val, ok := val.Object()["icon"]; ok {
 														place.Icon = &Photo{
 															Height: int(val.Object()["height"].Integer()),
-															Scale:  float64(val.Object()["scale"].Integer()),
 															URI:    val.Object()["uri"].String(),
 															Width:  int(val.Object()["width"].Integer()),
+														}
+
+														scale := val.Object()["scale"]
+														if scale.Kind() == jsonextract.Integer {
+															place.Icon.Scale = float64(scale.Integer())
+														} else {
+															place.Icon.Scale = scale.Float()
 														}
 													}
 												}

@@ -151,9 +151,15 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 							if val, ok := val.Object()["icon"]; ok {
 								work.CompanyIcon = &Photo{
 									Height: int(val.Object()["height"].Integer()),
-									Scale:  val.Object()["scale"].Float(),
 									URI:    val.Object()["uri"].String(),
 									Width:  int(val.Object()["width"].Integer()),
+								}
+
+								scale := val.Object()["scale"]
+								if scale.Kind() == jsonextract.Integer {
+									work.CompanyIcon.Scale = float64(scale.Integer())
+								} else {
+									work.CompanyIcon.Scale = scale.Float()
 								}
 							}
 						}
@@ -240,9 +246,15 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 									if val, ok := val.Object()["icon"]; ok {
 										education.SchoolIcon = &Photo{
 											Height: int(val.Object()["height"].Integer()),
-											Scale:  float64(val.Object()["scale"].Integer()),
 											URI:    val.Object()["uri"].String(),
 											Width:  int(val.Object()["width"].Integer()),
+										}
+
+										scale := val.Object()["scale"]
+										if scale.Kind() == jsonextract.Integer {
+											education.SchoolIcon.Scale = float64(scale.Integer())
+										} else {
+											education.SchoolIcon.Scale = scale.Float()
 										}
 									}
 								}
@@ -323,9 +335,15 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 									if val, ok := val.Object()["icon"]; ok {
 										education.SchoolIcon = &Photo{
 											Height: int(val.Object()["height"].Integer()),
-											Scale:  float64(val.Object()["scale"].Integer()),
 											URI:    val.Object()["uri"].String(),
 											Width:  int(val.Object()["width"].Integer()),
+										}
+
+										scale := val.Object()["scale"]
+										if scale.Kind() == jsonextract.Integer {
+											education.SchoolIcon.Scale = float64(scale.Integer())
+										} else {
+											education.SchoolIcon.Scale = scale.Float()
 										}
 									}
 								}

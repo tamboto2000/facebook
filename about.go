@@ -21,7 +21,7 @@ const (
 // About contains profile about section data
 type About struct {
 	WorkHistory            []Work                  `json:"workHistory,omitempty"`
-	EducationHistory       []Education             `json:"educationHistories,omitempty"`
+	EducationHistory       []Education             `json:"educationHistory,omitempty"`
 	PlacesLived            []Place                 `json:"placesLived,omitempty"`
 	ContactAndBasicInfo    *ContactAndBasicInfo    `json:"contactAndBasicInfo,omitempty"`
 	FamilyAndRelationships *FamilyAndRelationships `json:"familyAndRelationships,omitempty"`

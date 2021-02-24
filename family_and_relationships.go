@@ -96,9 +96,15 @@ func extractFamilyMember(json *jsonextract.JSON) ([]FamilyMember, []Relationship
 														if val, ok := val.Object()["icon"]; ok {
 															relation.Profile.ProfilePhoto = &Photo{
 																Height: int(val.Object()["height"].Integer()),
-																Scale:  float64(val.Object()["scale"].Integer()),
 																URI:    val.Object()["uri"].String(),
 																Width:  int(val.Object()["width"].Integer()),
+															}
+
+															scale := val.Object()["scale"]
+															if scale.Kind() == jsonextract.Integer {
+																relation.Profile.ProfilePhoto.Scale = float64(scale.Integer())
+															} else {
+																relation.Profile.ProfilePhoto.Scale = scale.Float()
 															}
 														}
 													}
@@ -156,9 +162,15 @@ func extractFamilyMember(json *jsonextract.JSON) ([]FamilyMember, []Relationship
 														if val, ok := val.Object()["icon"]; ok {
 															family.Profile.ProfilePhoto = &Photo{
 																Height: int(val.Object()["height"].Integer()),
-																Scale:  float64(val.Object()["scale"].Integer()),
 																URI:    val.Object()["uri"].String(),
 																Width:  int(val.Object()["width"].Integer()),
+															}
+
+															scale := val.Object()["scale"]
+															if scale.Kind() == jsonextract.Integer {
+																family.Profile.ProfilePhoto.Scale = float64(scale.Integer())
+															} else {
+																family.Profile.ProfilePhoto.Scale = scale.Float()
 															}
 														}
 													}
