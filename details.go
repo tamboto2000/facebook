@@ -8,8 +8,8 @@ type NamePronunciation struct {
 	AudioURI string `json:"audioURI,omitempty"`
 }
 
-// Nickname contains nickname and its type
-type Nickname struct {
+// OtherName contains user name and its type
+type OtherName struct {
 	Name string `json:"name,omitempty"`
 	Type string `json:"type,omitempty"`
 }
@@ -18,7 +18,7 @@ type Nickname struct {
 type Details struct {
 	About             string             `json:"about,omitempty"`
 	NamePronunciation *NamePronunciation `json:"namePronunciation,omitempty"`
-	Nicknames         []Nickname         `json:"nicknames,omitempty"`
+	OtherNames        []OtherName        `json:"otherNames,omitempty"`
 	FavoriteQuotes    string             `json:"favoriteQuotes,omitempty"`
 }
 
@@ -27,7 +27,7 @@ func (prof *Profile) SyncDetails() error {
 	jsons, err := prof.reqAboutCollection(aboutDetails)
 	if err != nil {
 		return err
-	}	
+	}
 
 	for _, json := range jsons {
 		val, ok := json.Object()["label"]
@@ -112,7 +112,7 @@ func extractDetails(json *jsonextract.JSON) *Details {
 													continue
 												}
 
-												nickname := Nickname{
+												nickname := OtherName{
 													Name: node.Object()["title"].Object()["text"].String(),
 												}
 
@@ -130,7 +130,7 @@ func extractDetails(json *jsonextract.JSON) *Details {
 													}
 												}
 
-												details.Nicknames = append(details.Nicknames, nickname)
+												details.OtherNames = append(details.OtherNames, nickname)
 											}
 										}
 									}
