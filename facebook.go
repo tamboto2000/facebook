@@ -1,11 +1,9 @@
 package facebook
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"sync"
 
@@ -79,7 +77,7 @@ RETRY:
 	jsons, err := jsonextract.FromBytes(body)
 	if err != nil {
 		return err
-	}	
+	}
 
 	if !findObj(jsons, func(json *jsonextract.JSON) bool {
 		obj := json.Object()
@@ -170,93 +168,6 @@ RETRY:
 	}
 
 	return nil
-}
-
-// Save saves session to ./fb_session.json
-func (fb *Facebook) Save() error {
-	return fb.save("./fb_session.json")
-}
-
-// SaveToPath saves session to path
-func (fb *Facebook) SaveToPath(path string) error {
-	return fb.save(path)
-}
-
-// save fb session to path
-func (fb *Facebook) save(path string) error {
-	cs := make([]*http.Cookie, 0)
-	fb.cookies.Range(func(key, value interface{}) bool {
-		cs = append(cs, value.(*http.Cookie))
-		return true
-	})
-
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-
-	defer f.Close()
-
-	conf := Config{
-		FbDtsg:   fb.FbDtsg,
-		Jazoest:  fb.Jazoest,
-		SiteData: fb.SiteData,
-		Cookies:  cs,
-	}
-	return json.NewEncoder(f).Encode(conf)
-}
-
-// Load load config from ./fb_session.json and set to Facebook client
-func (fb *Facebook) Load() error {
-	conf, err := load("./fb_session.json")
-	if err != nil {
-		return err
-	}
-
-	for _, c := range conf.Cookies {
-		fb.cookies.Store(c.Name, c)
-	}
-
-	fb.FbDtsg = conf.FbDtsg
-	fb.Jazoest = conf.Jazoest
-	fb.SiteData = conf.SiteData
-
-	return nil
-}
-
-// LoadFromPath load config from path and set to Facebook client
-func (fb *Facebook) LoadFromPath(path string) error {
-	conf, err := load(path)
-	if err != nil {
-		return err
-	}
-
-	for _, c := range conf.Cookies {
-		fb.cookies.Store(c.Name, c)
-	}
-
-	fb.FbDtsg = conf.FbDtsg
-	fb.Jazoest = conf.Jazoest
-	fb.SiteData = conf.SiteData
-
-	return nil
-}
-
-// load fb session from path
-func load(path string) (*Config, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-
-	defer f.Close()
-
-	conf := new(Config)
-	if err := json.NewDecoder(f).Decode(conf); err != nil {
-		return nil, err
-	}
-
-	return conf, nil
 }
 
 // merge cookies
