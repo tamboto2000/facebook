@@ -19,14 +19,6 @@ const (
 	SectionAbout = "ABOUT"
 )
 
-// Config saves Facebook client settings
-type Config struct {
-	FbDtsg   string
-	Jazoest  string
-	SiteData *jsonextract.JSON
-	Cookies  []*http.Cookie
-}
-
 // Facebook is Facebook client
 type Facebook struct {
 	cookies  *sync.Map
