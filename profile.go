@@ -37,22 +37,12 @@ func (fb *Facebook) Profile(user string) (*Profile, error) {
 
 	if resp.StatusCode == 404 {
 		return nil, ErrUserNotFound
-	}
-
-	// DELETE
-	// f, _ := os.Create("raw_profile_" + user + ".html")
-	// defer f.Close()
-	// f.Write(body)
+	}	
 
 	jsons, err := jsonextract.FromBytes(body)
 	if err != nil {
 		return nil, err
-	}
-
-	// DELETE
-	// f, _ := os.Create(user + ".html")
-	// f.Write(body)
-	// f.Close()
+	}	
 
 	prof := &Profile{fb: fb}
 	if !composeProfile(jsons, prof) {

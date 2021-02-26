@@ -22,9 +22,7 @@ func (prof *Profile) SyncLifeEvents() error {
 	if err != nil {
 		return err
 	}
-
-	// DELETE
-	// jsonextract.SaveToPath(jsons, "raw_life_events.json")
+		
 	for _, json := range jsons {
 		val, ok := json.Object()["label"]
 		if !ok {

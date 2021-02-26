@@ -47,12 +47,7 @@ func (prof *Profile) SyncAbout() error {
 
 	if err != nil {
 		return err
-	}
-
-	// DELETE
-	// f, _ := os.Create("raw_about_" + handle + ".html")
-	// defer f.Close()
-	// f.Write(rawBody)
+	}	
 
 	// find profile about section vars
 	if !findObj(jsons, func(json *jsonextract.JSON) bool {

@@ -37,10 +37,7 @@ func (prof *Profile) SyncContactAndBasicInfo() error {
 	jsons, err := prof.reqAboutCollection(aboutContactAndBasicInfo)
 	if err != nil {
 		return err
-	}
-
-	// DELETE
-	// jsonextract.SaveToPath(jsons, "raw_contact_basic_info.json")
+	}	
 
 	for _, json := range jsons {
 		val, ok := json.Object()["label"]

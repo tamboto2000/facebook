@@ -27,10 +27,7 @@ func (prof *Profile) SyncFriends() error {
 
 	if err != nil {
 		return err
-	}
-
-	// DELETE
-	// jsonextract.SaveToPath(jsons, "raw_friends.json")
+	}	
 
 	// find friends tokens
 	if !findObj(jsons, func(json *jsonextract.JSON) bool {
@@ -68,12 +65,7 @@ func (prof *Profile) AllFriends() (*Friends, error) {
 
 	if err != nil {
 		return nil, err
-	}
-
-	// DELETE
-	// jsonextract.SaveToPath(jsons, "raw_all_friends.json")
-	return nil, nil
-	//END
+	}	
 
 	friends := new(Friends)
 	jsons, err = prof.reqFriends(friendsAll, "")
@@ -82,9 +74,6 @@ func (prof *Profile) AllFriends() (*Friends, error) {
 	}
 
 	findKeyObj(jsons, "pageItems", func(parent, obj *jsonextract.JSON) bool {
-		// DELETE
-		// jsonextract.SaveToPath([]*jsonextract.JSON{obj}, "raw_friends_all_pageItems.json")
-
 		return true
 	})
 

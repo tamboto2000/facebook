@@ -50,9 +50,6 @@ func (prof *Profile) SyncWorkAndEducation() error {
 		return err
 	}
 
-	// DELETE
-	// jsonextract.SaveToPath(jsons, "work_education_bundle.json")
-
 	for _, json := range jsons {
 		val, ok := json.Object()["label"]
 		if !ok {

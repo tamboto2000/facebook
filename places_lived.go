@@ -17,10 +17,7 @@ func (prof *Profile) SyncPlacesLived() error {
 	jsons, err := prof.reqAboutCollection(aboutPlacesLived)
 	if err != nil {
 		return err
-	}
-
-	// DELETE
-	// jsonextract.SaveToPath(jsons, "places_lived_bundle.json")
+	}	
 
 	for _, json := range jsons {
 		if val, ok := json.Object()["label"]; ok {

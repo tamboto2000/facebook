@@ -79,16 +79,7 @@ RETRY:
 	jsons, err := jsonextract.FromBytes(body)
 	if err != nil {
 		return err
-	}
-
-	// // DELETE
-	// jsonextract.Save(jsons)
-
-	// // DELETE
-	// f, _ := os.Create("init.html")
-	// f.Write(body)
-	// f.Close()
-	// os.Exit(0)
+	}	
 
 	if !findObj(jsons, func(json *jsonextract.JSON) bool {
 		obj := json.Object()

@@ -27,10 +27,7 @@ func (prof *Profile) SyncDetails() error {
 	jsons, err := prof.reqAboutCollection(aboutDetails)
 	if err != nil {
 		return err
-	}
-
-	// DELETE
-	// jsonextract.SaveToPath(jsons, "raw_details.json")
+	}	
 
 	for _, json := range jsons {
 		val, ok := json.Object()["label"]

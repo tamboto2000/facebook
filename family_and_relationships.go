@@ -29,10 +29,7 @@ func (prof *Profile) SyncFamilyAndRelationships() error {
 	jsons, err := prof.reqAboutCollection(aboutFamilyAndRelationships)
 	if err != nil {
 		return err
-	}
-
-	// DELETE
-	// jsonextract.SaveToPath(jsons, "raw_family_relationships.json")
+	}	
 
 	for _, json := range jsons {
 		if val, ok := json.Object()["label"]; ok {
