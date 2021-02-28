@@ -30,7 +30,7 @@ type Education struct {
 	DateEndUnix   int64  `json:"dateEndUnix,omitempty"`
 	// This field contains degree, concentrations, and description, if any.
 	// Why I can't separate these data to different fields? Unfortunately
-	// data from Facebook GraphQL API is not specified all data to which data which,
+	// data from Facebook GraphQL API is not specified all data to specific fields,
 	// no flag, no tag, no reference resource id, just spitting data according to view
 	// position. But this only apply to college type, for high_school the description
 	// can be assiggned on separate field
@@ -49,9 +49,6 @@ func (about *About) SyncWorkAndEducation() error {
 	if err != nil {
 		return err
 	}
-
-	// DELETE
-	jsonextract.SaveToPath(jsons, "work_and_education.json")
 
 	for _, json := range jsons {
 		val, ok := json.Object()["label"]
@@ -136,7 +133,7 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 								continue
 							}
 
-							val, ok = rng.Object()["url"]
+							val, ok = val.Object()["url"]
 							if !ok {
 								continue
 							}
