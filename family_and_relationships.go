@@ -25,17 +25,17 @@ type FamilyAndRelationships struct {
 }
 
 // SyncFamilyAndRelationships retrieve family and relationships
-func (prof *Profile) SyncFamilyAndRelationships() error {
-	jsons, err := prof.reqAboutCollection(aboutFamilyAndRelationships)
+func (about *About) SyncFamilyAndRelationships() error {
+	jsons, err := about.profile.reqAboutCollection(aboutFamilyAndRelationships)
 	if err != nil {
 		return err
-	}	
+	}
 
 	for _, json := range jsons {
 		if val, ok := json.Object()["label"]; ok {
 			if val.String() == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
 				members, relations := extractFamilyMember(json)
-				prof.About.FamilyAndRelationships = &FamilyAndRelationships{
+				about.FamilyAndRelationships = &FamilyAndRelationships{
 					FamilyMembers: members,
 					Relationships: relations,
 				}

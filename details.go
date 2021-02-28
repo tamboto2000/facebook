@@ -23,8 +23,8 @@ type Details struct {
 }
 
 // SyncDetails retrieve profile's details info
-func (prof *Profile) SyncDetails() error {
-	jsons, err := prof.reqAboutCollection(aboutDetails)
+func (about *About) SyncDetails() error {
+	jsons, err := about.profile.reqAboutCollection(aboutDetails)
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (prof *Profile) SyncDetails() error {
 
 		if val.String() == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
 			details := extractDetails(json)
-			prof.About.Details = details
+			about.Details = details
 
 			break
 		}

@@ -17,12 +17,12 @@ type LifeEvents struct {
 }
 
 // SyncLifeEvents retrieve profile's life events
-func (prof *Profile) SyncLifeEvents() error {
-	jsons, err := prof.reqAboutCollection(aboutLifeEvents)
+func (about *About) SyncLifeEvents() error {
+	jsons, err := about.profile.reqAboutCollection(aboutLifeEvents)
 	if err != nil {
 		return err
 	}
-		
+
 	for _, json := range jsons {
 		val, ok := json.Object()["label"]
 		if !ok {
@@ -30,7 +30,7 @@ func (prof *Profile) SyncLifeEvents() error {
 		}
 
 		if val.String() == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
-			prof.About.LifeEvents = extractLifeEvents(json)
+			about.LifeEvents = extractLifeEvents(json)
 
 			break
 		}

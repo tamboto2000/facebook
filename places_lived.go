@@ -13,16 +13,16 @@ type Place struct {
 }
 
 // SyncPlacesLived retrieve profile's places lived history
-func (prof *Profile) SyncPlacesLived() error {
-	jsons, err := prof.reqAboutCollection(aboutPlacesLived)
+func (about *About) SyncPlacesLived() error {
+	jsons, err := about.profile.reqAboutCollection(aboutPlacesLived)
 	if err != nil {
 		return err
-	}	
+	}
 
 	for _, json := range jsons {
 		if val, ok := json.Object()["label"]; ok {
 			if val.String() == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
-				prof.About.PlacesLived = extractPlaceLived(json)
+				about.PlacesLived = extractPlaceLived(json)
 				break
 			}
 		}

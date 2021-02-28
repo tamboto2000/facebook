@@ -44,8 +44,8 @@ type Education struct {
 }
 
 // SyncWorkAndEducation retrieve Profile's work/occupation history and education history
-func (prof *Profile) SyncWorkAndEducation() error {
-	jsons, err := prof.reqAboutCollection(aboutWorkAndEducation)
+func (about *About) SyncWorkAndEducation() error {
+	jsons, err := about.profile.reqAboutCollection(aboutWorkAndEducation)
 	if err != nil {
 		return err
 	}
@@ -58,8 +58,8 @@ func (prof *Profile) SyncWorkAndEducation() error {
 
 		if val.String() == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
 			works, educations := extractWorks(json)
-			prof.About.WorkHistory = works
-			prof.About.EducationHistory = educations
+			about.WorkHistory = works
+			about.EducationHistory = educations
 			break
 		}
 	}

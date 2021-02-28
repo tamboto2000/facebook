@@ -27,6 +27,7 @@ type About struct {
 	FamilyAndRelationships *FamilyAndRelationships `json:"familyAndRelationships,omitempty"`
 	Details                *Details                `json:"details,omitempty"`
 	LifeEvents             []LifeEvents            `json:"lifeEvents,omitempty"`
+	profile                *Profile
 }
 
 // SyncAbout fetch required tokens for requesting profile about data collections
@@ -47,7 +48,7 @@ func (prof *Profile) SyncAbout() error {
 
 	if err != nil {
 		return err
-	}	
+	}
 
 	// find profile about section vars
 	if !findObj(jsons, func(json *jsonextract.JSON) bool {
@@ -89,7 +90,7 @@ func (prof *Profile) SyncAbout() error {
 		return errors.New("Important tokens for About section is not found")
 	}
 
-	prof.About = new(About)
+	prof.About = &About{profile: prof}
 
 	return nil
 }

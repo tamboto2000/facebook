@@ -33,11 +33,11 @@ type BasicInfo struct {
 }
 
 // SyncContactAndBasicInfo retrieve profile's basic contact and info
-func (prof *Profile) SyncContactAndBasicInfo() error {
-	jsons, err := prof.reqAboutCollection(aboutContactAndBasicInfo)
+func (about *About) SyncContactAndBasicInfo() error {
+	jsons, err := about.profile.reqAboutCollection(aboutContactAndBasicInfo)
 	if err != nil {
 		return err
-	}	
+	}
 
 	for _, json := range jsons {
 		val, ok := json.Object()["label"]
@@ -46,7 +46,7 @@ func (prof *Profile) SyncContactAndBasicInfo() error {
 		}
 
 		if val.String() == "ProfileCometAboutAppSectionQuery$defer$ProfileCometAboutAppSectionContent_appSection" {
-			prof.About.ContactAndBasicInfo = extractContactBasicInfo(json)
+			about.ContactAndBasicInfo = extractContactBasicInfo(json)
 			break
 		}
 	}
