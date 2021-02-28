@@ -17,6 +17,11 @@ Facebook is a library for scraping Facebook profile data, such as username, full
 - Get user friend list
 - Get user posts
 
+## Install
+```sh
+$ go get github.com/tamboto2000/facebook
+```
+
 ## Example
 
 ```go
@@ -50,31 +55,31 @@ func main() {
 	}
 
 	// before getting all data from "About" section, make sure to call Profile.SyncAbout first
-	if err := profile.SyncAbout(); err != nil {
+	if err := profile.About.SyncAbout(); err != nil {
 		panic(err.Error())
 	}
 
-	if err := profile.SyncWorkAndEducation(); err != nil {
+	if err := profile.About.SyncWorkAndEducation(); err != nil {
 		panic(err.Error())
 	}
 
-	if err := profile.SyncPlacesLived(); err != nil {
+	if err := profile.About.SyncPlacesLived(); err != nil {
 		panic(err.Error())
 	}
 
-	if err := profile.SyncContactAndBasicInfo(); err != nil {
+	if err := profile.About.SyncContactAndBasicInfo(); err != nil {
 		panic(err.Error())
 	}
 
-	if err := profile.SyncFamilyAndRelationships(); err != nil {
+	if err := profile.About.SyncFamilyAndRelationships(); err != nil {
 		panic(err.Error())
 	}
 
-	if err := profile.SyncDetails(); err != nil {
+	if err := profile.About.SyncDetails(); err != nil {
 		panic(err.Error())
 	}
 
-	if err := profile.SyncLifeEvents(); err != nil {
+	if err := profile.About.SyncLifeEvents(); err != nil {
 		panic(err.Error())
 	}
 
