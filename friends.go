@@ -126,7 +126,7 @@ func (prof *Profile) reqFriends(c, cursor string) ([]*jsonextract.JSON, error) {
 	reqBody.Set("fb_api_req_friendly_name", apiName)
 	reqBody.Set("variables", string(vars.Bytes()))
 	reqBody.Set("doc_id", prof.friendSectionVars.Object()["queryID"].String())
-	rawBody, err := prof.fb.graphQlRequest(reqBody)
+	_, rawBody, err := prof.fb.graphQlRequest(reqBody)
 	if err != nil {
 		return nil, err
 	}

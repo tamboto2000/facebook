@@ -221,7 +221,7 @@ func (fb *Facebook) getRequest(path string, query url.Values) (*http.Response, [
 	return resp, buff.Bytes(), nil
 }
 
-func (fb *Facebook) graphQlRequest(body url.Values) ([]byte, error) {
+func (fb *Facebook) graphQlRequest(body url.Values) (*http.Response, []byte, error) {
 	header := http.Header{}
 	header.Set("Accept", "*/*")
 	header.Set("Accept-Encoding", "gzip")
@@ -237,7 +237,7 @@ func (fb *Facebook) graphQlRequest(body url.Values) ([]byte, error) {
 
 	req, err := http.NewRequest("POST", fb.host+"/api/graphql/", strings.NewReader(siteData.Encode()))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	req.Header = header
@@ -248,16 +248,16 @@ func (fb *Facebook) graphQlRequest(body url.Values) ([]byte, error) {
 
 	resp, err := fb.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	defer resp.Body.Close()
 	buff, err := decompressResponseBody(resp)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	fb.mergeCookie(resp.Cookies())
 
-	return buff.Bytes(), nil
+	return resp, buff.Bytes(), nil
 }

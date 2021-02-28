@@ -50,6 +50,9 @@ func (about *About) SyncWorkAndEducation() error {
 		return err
 	}
 
+	// DELETE
+	jsonextract.SaveToPath(jsons, "work_and_education.json")
+
 	for _, json := range jsons {
 		val, ok := json.Object()["label"]
 		if !ok {

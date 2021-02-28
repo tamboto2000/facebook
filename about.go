@@ -133,7 +133,7 @@ func (prof *Profile) reqAboutCollection(c string) ([]*jsonextract.JSON, error) {
 	reqBody.Set("fb_api_req_friendly_name", "ProfileCometAboutAppSectionQuery")
 	reqBody.Set("variables", string(vars.Bytes()))
 	reqBody.Set("doc_id", prof.aboutSectionVars.Object()["queryID"].String())
-	rawBody, err := prof.fb.graphQlRequest(reqBody)
+	_, rawBody, err := prof.fb.graphQlRequest(reqBody)
 	if err != nil {
 		return nil, err
 	}
