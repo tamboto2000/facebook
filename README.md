@@ -97,7 +97,7 @@ func main() {
 }
 ```
 
-Currently, all methods mentioned above, can not run concurrently
+Support concurrency for syncing data from profile's About section
 
 See [documentation](https://pkg.go.dev/github.com/tamboto2000/facebook) for more info
 
