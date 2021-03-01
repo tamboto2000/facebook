@@ -114,9 +114,8 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 					return nil, nil
 				}
 
-				for i, node := range val.Array() {
-					// skip the first index because the first index is a button for add new work history
-					if i == 0 {
+				for _, node := range val.Array() {
+					if node.Object()["field_type"].String() != "work" {
 						continue
 					}
 
@@ -216,8 +215,8 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 			if val.String() == "college" {
 				if val, ok := section.Object()["profile_fields"]; ok {
 					if val, ok := val.Object()["nodes"]; ok {
-						for i, node := range val.Array() {
-							if i == 0 {
+						for _, node := range val.Array() {
+							if node.Object()["field_type"].String() != "education" {
 								continue
 							}
 
@@ -305,8 +304,8 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 			if val.String() == "secondary_school" {
 				if val, ok := section.Object()["profile_fields"]; ok {
 					if val, ok := val.Object()["nodes"]; ok {
-						for i, node := range val.Array() {
-							if i == 0 {
+						for _, node := range val.Array() {
+							if node.Object()["field_type"].String() != "education" {
 								continue
 							}
 
