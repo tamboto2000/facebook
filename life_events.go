@@ -49,8 +49,8 @@ func extractLifeEvents(json *jsonextract.JSON) []LifeEvents {
 						if val, ok := val.Object()["user"]; ok {
 							if val, ok := val.Object()["timeline_sections"]; ok {
 								if val, ok := val.Object()["nodes"]; ok {
-									for i, node := range val.Array() {
-										if i == 0 {
+									for _, node := range val.Array() {
+										if node.Object()["year"].Kind() == jsonextract.Null {
 											continue
 										}
 
