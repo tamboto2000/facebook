@@ -1,6 +1,7 @@
 package facebook
 
 import (
+	jsonenc "encoding/json"
 	"errors"
 	"net/url"
 	"strings"
@@ -75,7 +76,10 @@ func (prof *Profile) SyncAbout() error {
 
 			if strings.Contains(val.String(), "adp_ProfileCometAboutAppSectionQueryRelayPreloader") {
 				if _, ok = obj["variables"]; ok {
-					prof.aboutSectionVars = json
+					if err := jsonenc.Unmarshal(json.Bytes(), prof.aboutSectionVars); err != nil {
+						return false
+					}
+
 					return true
 				}
 			}
@@ -96,43 +100,17 @@ func (prof *Profile) SyncAbout() error {
 }
 
 func (prof *Profile) reqAboutCollection(c string) ([]*jsonextract.JSON, error) {
-	var section *jsonextract.JSON
-	for _, val := range prof.profileSections.Object()["edges"].Array() {
-		node, ok := val.Object()["node"]
-		if !ok {
-			continue
-		}
+	coll := prof.aboutSectionVars.getColl(c)
 
-		if val, ok := node.Object()["section_type"]; ok && val.String() == SectionAbout {
-			section = node
-			break
-		}
-	}
-
-	if section == nil {
-		return nil, errors.New("Important tokens for About section is not found")
-	}
-
-	var coll *jsonextract.JSON
-	for _, val := range section.Object()["all_collections"].Object()["nodes"].Array() {
-		tabKey, ok := val.Object()["tab_key"]
-		if !ok {
-			continue
-		}
-
-		if tabKey.String() == c {
-			coll = val
-			break
-		}
-	}
-
-	vars := prof.aboutSectionVars.Object()["variables"]
-	vars.Object()["collectionToken"].SetStr(coll.Object()["id"].String())
+	vars := prof.aboutSectionVars.getVariables()
+	vars.CollectionToken = coll.ID
+	varsByts, _ := jsonenc.Marshal(vars)
 
 	reqBody := make(url.Values)
 	reqBody.Set("fb_api_req_friendly_name", "ProfileCometAboutAppSectionQuery")
-	reqBody.Set("variables", string(vars.Bytes()))
-	reqBody.Set("doc_id", prof.aboutSectionVars.Object()["queryID"].String())
+	reqBody.Set("variables", string(varsByts))
+	reqBody.Set("doc_id", prof.aboutSectionVars.QueryID)
+
 	_, rawBody, err := prof.fb.graphQlRequest(reqBody)
 	if err != nil {
 		return nil, err

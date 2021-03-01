@@ -2,7 +2,6 @@ package facebook
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"strconv"
 
@@ -13,8 +12,8 @@ import (
 // prepare SiteData for GraphQL request
 func (fb *Facebook) prepSiteData(std *jsonextract.JSON) url.Values {
 	final := make(url.Values)
-	cUser, _ := fb.cookies.Load("c_user")
-	userID := cUser.(*http.Cookie).Value
+	cUser := fb.cookies.getByName("c_user")
+	userID := cUser.Value
 	final.Set("av", userID)
 	final.Set("__user", userID)
 	final.Set("__a", "1")

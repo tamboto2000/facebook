@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
 
 	"github.com/tamboto2000/jsonextract/v3"
 )
@@ -21,7 +20,7 @@ const (
 
 // Facebook is Facebook client
 type Facebook struct {
-	cookies  *sync.Map
+	cookies  *cookies
 	client   *http.Client
 	FbDtsg   string
 	Jazoest  string
@@ -33,8 +32,7 @@ type Facebook struct {
 // New initialize Facebook client
 func New() *Facebook {
 	return &Facebook{
-		cookies: new(sync.Map),
-		client:  http.DefaultClient,
+		client: http.DefaultClient,
 	}
 }
 
@@ -44,9 +42,7 @@ func (fb *Facebook) SetCookieStr(cookie string) {
 	req.Header = http.Header{}
 	req.Header.Add("Cookie", cookie)
 	cookies := req.Cookies()
-	for _, c := range cookies {
-		fb.cookies.Store(c.Name, c)
-	}
+	fb.cookies = newCookies(cookies)
 }
 
 // Init initialize Facebook client
@@ -54,12 +50,12 @@ func (fb *Facebook) Init() error {
 	fb.host = "https://www.facebook.com"
 
 RETRY:
-	cUser, ok := fb.cookies.Load("c_user")
-	if !ok {
+	cUser := fb.cookies.getByName("c_user")
+	if cUser == nil {
 		return ErrInvalidSession
 	}
 
-	userID := cUser.(*http.Cookie).Value
+	userID := cUser.Value
 
 	_, body, err := fb.getRequest("/"+userID, nil)
 	if err != nil {
@@ -162,27 +158,23 @@ RETRY:
 	return nil
 }
 
-// merge cookies
-func (fb *Facebook) mergeCookie(newC []*http.Cookie) {
-	for _, c := range newC {
-		_, ok := fb.cookies.Load(c.Name)
-		if ok {
-			fb.cookies.Delete(c.Name)
-		}
-
-		fb.cookies.Store(c.Name, c)
-	}
-}
-
 func (fb *Facebook) getRequest(path string, query url.Values) (*http.Response, []byte, error) {
-	header := http.Header{
-		"User-Agent":                {userAgent},
-		"Accept":                    {"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"},
-		"Accept-Language":           {"en-US,en;q=0.5"},
-		"Accept-Encoding":           {"gzip"},
-		"Connection":                {"keep-alive"},
-		"Upgrade-Insecure-Requests": {"1"},
-	}
+	// header := http.Header{
+	// 	"User-Agent":                {userAgent},
+	// 	"Accept":                    {"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"},
+	// 	"Accept-Language":           {"en-US,en;q=0.5"},
+	// 	"Accept-Encoding":           {"gzip"},
+	// 	"Connection":                {"keep-alive"},
+	// 	"Upgrade-Insecure-Requests": {"1"},
+	// }
+
+	header := make(http.Header)
+	header.Set("User-Agent", userAgent)
+	header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+	header.Set("Accept-Language", "en-US,en;q=0.5")
+	header.Set("Accept-Encoding", "gzip")
+	header.Set("Connection", "keep-alive")
+	header.Set("Upgrade-Insecure-Requests", "1")
 
 	urlParsed, err := url.Parse(fb.host + path)
 	if err != nil {
@@ -199,10 +191,9 @@ func (fb *Facebook) getRequest(path string, query url.Values) (*http.Response, [
 	}
 
 	req.Header = header
-	fb.cookies.Range(func(key, val interface{}) bool {
-		req.AddCookie(val.(*http.Cookie))
-		return true
-	})
+	for _, c := range fb.cookies.getAll() {
+		req.AddCookie(c)
+	}
 
 	resp, err := fb.client.Do(req)
 	if err != nil {
@@ -216,7 +207,7 @@ func (fb *Facebook) getRequest(path string, query url.Values) (*http.Response, [
 		return nil, nil, err
 	}
 
-	fb.mergeCookie(resp.Cookies())
+	fb.cookies.merge(resp.Cookies())
 
 	return resp, buff.Bytes(), nil
 }
@@ -241,10 +232,9 @@ func (fb *Facebook) graphQlRequest(body url.Values) (*http.Response, []byte, err
 	}
 
 	req.Header = header
-	fb.cookies.Range(func(key, val interface{}) bool {
-		req.AddCookie(val.(*http.Cookie))
-		return true
-	})
+	for _, c := range fb.cookies.getAll() {
+		req.AddCookie(c)
+	}
 
 	resp, err := fb.client.Do(req)
 	if err != nil {
@@ -257,7 +247,7 @@ func (fb *Facebook) graphQlRequest(body url.Values) (*http.Response, []byte, err
 		return nil, nil, err
 	}
 
-	fb.mergeCookie(resp.Cookies())
+	fb.cookies.merge(resp.Cookies())
 
 	return resp, buff.Bytes(), nil
 }

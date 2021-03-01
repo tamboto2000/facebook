@@ -1,6 +1,7 @@
 package facebook
 
 import (
+	jsonenc "encoding/json"
 	"errors"
 
 	"github.com/tamboto2000/jsonextract/v3"
@@ -20,9 +21,7 @@ type Profile struct {
 	BioText               string `json:"bioText,omitempty"`
 	About                 *About `json:"about,omitempty"`
 
-	profileSections   *jsonextract.JSON
-	variables         *jsonextract.JSON
-	aboutSectionVars  *jsonextract.JSON
+	aboutSectionVars  *ProfileSection
 	friendSectionVars *jsonextract.JSON
 
 	fb *Facebook
@@ -37,12 +36,12 @@ func (fb *Facebook) Profile(user string) (*Profile, error) {
 
 	if resp.StatusCode == 404 {
 		return nil, ErrUserNotFound
-	}	
+	}
 
 	jsons, err := jsonextract.FromBytes(body)
 	if err != nil {
 		return nil, err
-	}	
+	}
 
 	prof := &Profile{fb: fb}
 	if !composeProfile(jsons, prof) {
@@ -79,11 +78,6 @@ func composeProfile(jsons []*jsonextract.JSON, prof *Profile) bool {
 			val, ok := json.Object()["__bbox"]
 			if !ok {
 				return false
-			}
-
-			// find profile variables (optional)
-			if val, ok := val.Object()["variables"]; ok {
-				prof.variables = val
 			}
 
 			val, ok = val.Object()["result"]
@@ -139,7 +133,28 @@ func composeProfile(jsons []*jsonextract.JSON, prof *Profile) bool {
 			if val, ok := val.Object()["profile_tabs"]; ok {
 				if val, ok := val.Object()["profile_user"]; ok {
 					if val, ok := val.Object()["timeline_nav_app_sections"]; ok {
-						prof.profileSections = val
+						// iterate sections
+						edges, ok := val.Object()["edges"]
+						if ok {
+							for _, edge := range edges.Array() {
+								if node, ok := edge.Object()["node"]; ok {
+									if sectionType, ok := node.Object()["section_type"]; ok {
+										if allColls, ok := node.Object()["all_collections"]; ok {
+											if nodes, ok := allColls.Object()["nodes"]; ok {
+												colls := make([]Collection, 0)
+												jsonenc.Unmarshal(nodes.Bytes(), &colls)
+
+												// get about section
+												if sectionType.String() == "ABOUT" {
+													prof.aboutSectionVars = newProfileSection()
+													prof.aboutSectionVars.collections = colls
+												}
+											}
+										}
+									}
+								}
+							}
+						}
 					}
 				}
 			}
