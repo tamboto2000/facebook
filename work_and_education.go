@@ -1,9 +1,8 @@
 package facebook
 
 import (
-	"strings"
+	"os"
 
-	"github.com/araddon/dateparse"
 	"github.com/tamboto2000/jsonextract/v3"
 )
 
@@ -22,24 +21,15 @@ type Work struct {
 
 // Education contain education information
 type Education struct {
-	Title         string `json:"title,omitempty"`
-	SchoolURL     string `json:"schoolUrl,omitempty"`
-	DateStart     string `json:"dateStart,omitempty"`
-	DateStartUnix int64  `json:"dateStartUnix,omitempty"`
-	DateEnd       string `json:"dateEnd,omitempty"`
-	DateEndUnix   int64  `json:"dateEndUnix,omitempty"`
-	// This field contains degree, concentrations, and description, if any.
-	// Why I can't separate these data to different fields? Unfortunately
-	// data from Facebook GraphQL API is not specified all data to specific fields,
-	// no flag, no tag, no reference resource id, just spitting data according to view
-	// position. But this only apply to college type, for high_school the description
-	// can be assiggned on separate field
-	OtherInfo   []string `json:"otherInfo,omitempty"`
-	Description string   `json:"description,omitempty"`
-	SchoolIcon  *Photo   `json:"schoolIcon,omitempty"`
-	// Only assigned if type is high_school
-	ClassOf string `json:"classOf,omitempty"`
-	// college or high_school
+	Title     string `json:"title,omitempty"`
+	SchoolURL string `json:"schoolUrl,omitempty"`
+	// start and end date can't be determined
+	DateRange     []string `json:"dates"`
+	DateRangeUnix []int64  `json:"dateRangeUnix"`
+	OtherInfo     []string `json:"otherInfo,omitempty"`
+	Description   string   `json:"description,omitempty"`
+	SchoolIcon    *Photo   `json:"schoolIcon,omitempty"`
+	// college or secondary_school
 	Type string `json:"type,omitempty"`
 }
 
@@ -95,6 +85,11 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 		if !ok {
 			continue
 		}
+
+		// DELETE
+		f, _ := os.Create("work_and_education.json")
+		f.Write(val.Bytes())
+		f.Close()
 
 		for _, section := range val.Array() {
 			val, ok := section.Object()["field_section_type"]
@@ -181,25 +176,35 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 									// can be date range or location
 									if val.String() == "LOW" {
 										if val, ok := item.Object()["text"]; ok {
-											// if strings contains " - ", this must be date range, otherwise a location
-											if strings.Contains(val.Object()["text"].String(), " - ") {
-												split := strings.Split(val.Object()["text"].String(), " - ")
-												if len(split) > 1 {
-													date1, err := dateparse.ParseAny(split[0])
-													if err == nil {
-														work.DateStart = split[0]
-														work.DateStartUnix = date1.Unix()
-													}
+											// find date range with regex
+											// if non found, then this must be location, hopefully...
+											text := val.Object()["text"].String()
+											dates, datesStr := extractDate(text)
 
-													date2, err := dateparse.ParseAny(split[1])
-													if err == nil {
-														work.DateEnd = split[1]
-														work.DateEndUnix = date2.Unix()
-													}
-												}
-
+											if len(dates) == 0 && len(datesStr) == 0 {
+												work.Location = text
 											} else {
-												work.Location = val.Object()["text"].String()
+												if len(dates) == 2 {
+													var dateStartIdx int
+													var dateEndIdx int
+
+													if dates[0].Unix() < dates[1].Unix() {
+														dateStartIdx = 0
+														dateEndIdx = 1
+													} else {
+														dateStartIdx = 1
+														dateEndIdx = 0
+													}
+
+													work.DateStart = datesStr[dateStartIdx]
+													work.DateStartUnix = dates[dateStartIdx].Unix()
+
+													work.DateEnd = datesStr[dateEndIdx]
+													work.DateEndUnix = dates[dateEndIdx].Unix()
+												} else {
+													work.DateStart = datesStr[0]
+													work.DateStartUnix = dates[0].Unix()
+												}
 											}
 										}
 									}
@@ -270,19 +275,11 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 
 											// extract date range
 											if headStr == "LOW" {
-												split := strings.Split(val.Object()["text"].Object()["text"].String(), " - ")
-												if len(split) > 1 {
-													date1, err := dateparse.ParseAny(split[0])
-													if err == nil {
-														education.DateStart = split[0]
-														education.DateStartUnix = date1.Unix()
-													}
-
-													date2, err := dateparse.ParseAny(split[1])
-													if err == nil {
-														education.DateEnd = split[1]
-														education.DateEndUnix = date2.Unix()
-													}
+												text := val.Object()["text"].Object()["text"].String()
+												dates, datesStr := extractDate(text)
+												education.DateRange = datesStr
+												for _, date := range dates {
+													education.DateRangeUnix = append(education.DateRangeUnix, date.Unix())
 												}
 											}
 
@@ -311,7 +308,7 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 
 							education := Education{
 								Title: node.Object()["title"].Object()["text"].String(),
-								Type:  "high_school",
+								Type:  "secondary_school",
 							}
 
 							// find school url
@@ -359,7 +356,12 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 
 											// extract date range
 											if headStr == "LOW" {
-												education.ClassOf = val.Object()["text"].Object()["text"].String()
+												text := val.Object()["text"].Object()["text"].String()
+												dates, datesStr := extractDate(text)
+												education.DateRange = datesStr
+												for _, date := range dates {
+													education.DateRangeUnix = append(education.DateRangeUnix, date.Unix())
+												}
 											}
 
 											// extract other info, like degree, concentrations, and description
