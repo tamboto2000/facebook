@@ -1,8 +1,6 @@
 package facebook
 
 import (
-	"os"
-
 	"github.com/tamboto2000/jsonextract/v3"
 )
 
@@ -85,11 +83,6 @@ func extractWorks(json *jsonextract.JSON) ([]Work, []Education) {
 		if !ok {
 			continue
 		}
-
-		// DELETE
-		f, _ := os.Create("work_and_education.json")
-		f.Write(val.Bytes())
-		f.Close()
 
 		for _, section := range val.Array() {
 			val, ok := section.Object()["field_section_type"]
