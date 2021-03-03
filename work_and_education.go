@@ -22,8 +22,8 @@ type Education struct {
 	Title     string `json:"title,omitempty"`
 	SchoolURL string `json:"schoolUrl,omitempty"`
 	// start and end date can't be determined
-	DateRange     []string `json:"dates"`
-	DateRangeUnix []int64  `json:"dateRangeUnix"`
+	DateRange     []string `json:"dates,omitempty"`
+	DateRangeUnix []int64  `json:"dateRangeUnix,omitempty"`
 	OtherInfo     []string `json:"otherInfo,omitempty"`
 	Description   string   `json:"description,omitempty"`
 	SchoolIcon    *Photo   `json:"schoolIcon,omitempty"`
